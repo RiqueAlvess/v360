@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lembrete — Pesquisa Ainda Aberta</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f6f9; color: #333333; }
+    .wrapper { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .header { background-color: #f59e0b; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .body { padding: 36px 40px; }
+    .body p { font-size: 15px; line-height: 1.7; margin: 0 0 16px; }
+    .cta-wrapper { text-align: center; margin: 32px 0; }
+    .cta-button { display: inline-block; background-color: #f59e0b; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 6px; font-size: 16px; font-weight: 600; }
+    .deadline-box { background-color: #fffbeb; border: 1px solid #fde68a; padding: 16px 20px; border-radius: 6px; text-align: center; margin: 24px 0; }
+    .deadline-box span { font-size: 18px; font-weight: 700; color: #b45309; }
+    .notice { background-color: #f0f4ff; border-left: 4px solid #1a56db; padding: 14px 18px; border-radius: 0 4px 4px 0; font-size: 13px; color: #555; margin-top: 24px; }
+    .footer { background-color: #f4f6f9; padding: 20px 40px; text-align: center; font-size: 12px; color: #888888; }
+    .footer a { color: #1a56db; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>VIVAMENTE 360° — Lembrete</h1>
+    </div>
+    <div class="body">
+      <p>Olá,</p>
+      <p>
+        Percebemos que você ainda não respondeu à pesquisa <strong>${campaign_name}</strong>
+        de <strong>${company_name}</strong>. Sua voz é importante!
+      </p>
+      <p>
+        A pesquisa leva menos de 10 minutos e suas respostas são completamente
+        <strong>anônimas</strong>.
+      </p>
+      <div class="deadline-box">
+        Prazo para resposta: <span>${deadline_date}</span>
+      </div>
+      <div class="cta-wrapper">
+        <a class="cta-button" href="${magic_link}">Responder Agora</a>
+      </div>
+      <div class="notice">
+        <strong>Nota:</strong> Este lembrete é enviado somente uma vez. Seu link de
+        acesso permanece o mesmo e expira em <strong>${expires_in_days} dias</strong>.
+      </div>
+      <p style="margin-top:24px; font-size:13px; color:#555;">
+        Link direto: <span style="word-break:break-all;">${magic_link}</span>
+      </p>
+    </div>
+    <div class="footer">
+      <p>
+        Enviado pela plataforma <a href="https://vivamente.com.br">VIVAMENTE 360°</a>.
+        Se não quiser mais receber lembretes, aguarde o encerramento da campanha.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

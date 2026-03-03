@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campanha Encerrada — VIVAMENTE 360°</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f6f9; color: #333333; }
+    .wrapper { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .header { background-color: #6366f1; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .body { padding: 36px 40px; }
+    .body p { font-size: 15px; line-height: 1.7; margin: 0 0 16px; }
+    .summary-box { background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 20px 24px; margin: 24px 0; }
+    .summary-box h3 { margin: 0 0 12px; font-size: 15px; color: #4f46e5; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #ede9fe; }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: #6b7280; }
+    .summary-value { font-weight: 600; color: #333; }
+    .cta-wrapper { text-align: center; margin: 32px 0; }
+    .cta-button { display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 6px; font-size: 16px; font-weight: 600; }
+    .info-box { background-color: #f0f4ff; border-left: 4px solid #1a56db; padding: 14px 18px; border-radius: 0 4px 4px 0; font-size: 13px; color: #555; margin-top: 24px; }
+    .footer { background-color: #f4f6f9; padding: 20px 40px; text-align: center; font-size: 12px; color: #888888; }
+    .footer a { color: #1a56db; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Campanha Encerrada</h1>
+    </div>
+    <div class="body">
+      <p>Olá, equipe de RH de <strong>${company_name}</strong>,</p>
+      <p>
+        Confirmamos o encerramento da campanha <strong>${campaign_name}</strong>.
+        A coleta de respostas foi finalizada com sucesso.
+      </p>
+      <div class="summary-box">
+        <h3>Resumo da Campanha</h3>
+        <table style="width:100%; border-collapse:collapse;">
+          <tr style="border-bottom:1px solid #ede9fe;">
+            <td style="padding:6px 0; color:#6b7280; font-size:14px;">Início</td>
+            <td style="padding:6px 0; font-weight:600; font-size:14px; text-align:right;">${start_date}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #ede9fe;">
+            <td style="padding:6px 0; color:#6b7280; font-size:14px;">Encerramento</td>
+            <td style="padding:6px 0; font-weight:600; font-size:14px; text-align:right;">${end_date}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #ede9fe;">
+            <td style="padding:6px 0; color:#6b7280; font-size:14px;">Total de Convidados</td>
+            <td style="padding:6px 0; font-weight:600; font-size:14px; text-align:right;">${total_invited}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0; color:#6b7280; font-size:14px;">Total de Respostas</td>
+            <td style="padding:6px 0; font-weight:600; font-size:14px; text-align:right;">${total_responses}</td>
+          </tr>
+        </table>
+      </div>
+      <div class="cta-wrapper">
+        <a class="cta-button" href="${dashboard_url}">Ver Resultados</a>
+      </div>
+      <div class="info-box">
+        Os dados coletados estão seguros e o dashboard permanecerá disponível conforme
+        seu plano. Novos convites não podem mais ser enviados para esta campanha.
+      </div>
+    </div>
+    <div class="footer">
+      <p>
+        Plataforma <a href="https://vivamente.com.br">VIVAMENTE 360°</a> —
+        Avaliação psicossocial para o mercado B2B.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
