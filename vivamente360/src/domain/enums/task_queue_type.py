@@ -10,3 +10,4 @@ class TaskQueueType(str, Enum):
     GENERATE_REPORT = "generate_report"
     CLEANUP_EXPIRED_TOKENS = "cleanup_expired_tokens"
     NOTIFY_PLAN_COMPLETED = "notify_plan_completed"
+    ANALYZE_SENTIMENT = "analyze_sentiment"
