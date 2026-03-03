@@ -9,3 +9,4 @@ class TaskQueueType(str, Enum):
     SEND_INVITATIONS = "send_invitations"
     GENERATE_REPORT = "generate_report"
     CLEANUP_EXPIRED_TOKENS = "cleanup_expired_tokens"
+    NOTIFY_PLAN_COMPLETED = "notify_plan_completed"
