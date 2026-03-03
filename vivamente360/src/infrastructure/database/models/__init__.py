@@ -2,6 +2,7 @@
 # OBRIGATÓRIO: o env.py do Alembic importa este módulo para autogenerate funcionar.
 from src.infrastructure.database.models.base import Base, TimestampMixin
 from src.infrastructure.database.models.campaign import Campaign
+from src.infrastructure.database.models.file_asset import FileAsset
 from src.infrastructure.database.models.checklist_item import ChecklistItem
 from src.infrastructure.database.models.checklist_template import ChecklistTemplate
 from src.infrastructure.database.models.company import Company

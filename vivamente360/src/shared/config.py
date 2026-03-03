@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     EMAIL_FROM_NAME: str = "VIVAMENTE 360º"
     RESEND_WEBHOOK_SECRET: str = Field(default="whsec_placeholder")
 
+    # Cloudflare R2 Storage
+    CF_R2_ACCOUNT_ID: str = Field(default="placeholder_account_id")
+    CF_R2_ACCESS_KEY: str = Field(default="placeholder_access_key")
+    CF_R2_SECRET_KEY: str = Field(default="placeholder_secret_key")
+    CF_R2_BUCKET: str = Field(default="vivamente360")
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:

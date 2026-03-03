@@ -70,6 +70,7 @@ def _register_routers(app: FastAPI) -> None:
     from src.presentation.routers.checklist_router import router as checklist_router
     from src.presentation.routers.dashboard_router import router as dashboard_router
     from src.presentation.routers.email_router import router as email_router
+    from src.presentation.routers.files_router import router as files_router
     from src.presentation.routers.survey_response_router import (
         router as survey_response_router,
     )
@@ -79,6 +80,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(checklist_router, prefix="/api/v1")
     app.include_router(dashboard_router, prefix="/api/v1")
     app.include_router(email_router, prefix="/api/v1")
+    app.include_router(files_router, prefix="/api/v1")
     app.include_router(survey_response_router, prefix="/api/v1")
 
 
