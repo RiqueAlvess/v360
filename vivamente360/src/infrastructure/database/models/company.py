@@ -10,6 +10,9 @@ from src.infrastructure.database.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from src.infrastructure.database.models.campaign import Campaign
+    from src.infrastructure.database.models.job_position import JobPosition
+    from src.infrastructure.database.models.organizational_unit import OrganizationalUnit
+    from src.infrastructure.database.models.sector import Sector
     from src.infrastructure.database.models.user import User
 
 
@@ -36,4 +39,11 @@ class Company(Base, TimestampMixin):
     users: Mapped[list["User"]] = relationship("User", back_populates="company")
     campaigns: Mapped[list["Campaign"]] = relationship(
         "Campaign", back_populates="company"
+    )
+    organizational_units: Mapped[list["OrganizationalUnit"]] = relationship(
+        "OrganizationalUnit", back_populates="company"
+    )
+    sectors: Mapped[list["Sector"]] = relationship("Sector", back_populates="company")
+    job_positions: Mapped[list["JobPosition"]] = relationship(
+        "JobPosition", back_populates="company"
     )
