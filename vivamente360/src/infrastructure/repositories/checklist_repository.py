@@ -4,7 +4,6 @@ Regra R2: Repositories só persistem — nenhuma regra de negócio aqui.
 Regra R1: Type hints completos em todos os métodos.
 Regra R4: get_by_campaign() retorna tupla (items, total) para paginação obrigatória.
 """
-import math
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
@@ -12,6 +11,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.infrastructure.database.models.checklist_item import ChecklistItem
@@ -259,25 +259,52 @@ class SQLChecklistRepository(ChecklistRepository):
     ) -> list[ChecklistItem]:
         """Cria um ChecklistItem para cada template existente.
 
-        Idempotente: ignora templates já existentes via constraint única
-        (campaign_id, template_id).
+        Idempotente via INSERT ... ON CONFLICT DO NOTHING: se um template já
+        tiver um item criado para esta campanha (constraint única campaign_id,
+        template_id), o registro é ignorado silenciosamente — sem IntegrityError.
+        Retorna todos os itens da campanha ao final, incluindo pré-existentes.
+
+        Args:
+            campaign_id: UUID da campanha recém-criada.
+            company_id: UUID da empresa dona da campanha.
+
+        Returns:
+            Lista de todos os ChecklistItem da campanha após a operação.
         """
         templates: list[ChecklistTemplate] = await self.get_all_templates()
 
-        items: list[ChecklistItem] = []
-        for template in templates:
-            item = ChecklistItem(
-                id=uuid.uuid4(),
-                campaign_id=campaign_id,
-                template_id=template.id,
-                company_id=company_id,
-                concluido=False,
-            )
-            self._session.add(item)
-            items.append(item)
+        if not templates:
+            return []
 
+        values: list[dict[str, Any]] = [
+            {
+                "id": uuid.uuid4(),
+                "campaign_id": campaign_id,
+                "template_id": template.id,
+                "company_id": company_id,
+                "concluido": False,
+            }
+            for template in templates
+        ]
+
+        # ON CONFLICT DO NOTHING garante idempotência via unique constraint
+        stmt = (
+            pg_insert(ChecklistItem)
+            .values(values)
+            .on_conflict_do_nothing(
+                constraint="uq_checklist_items_campaign_template",
+            )
+        )
+        await self._session.execute(stmt)
         await self._session.flush()
-        return items
+
+        # Retorna todos os itens da campanha (inseridos agora ou pré-existentes)
+        result = await self._session.execute(
+            select(ChecklistItem)
+            .where(ChecklistItem.campaign_id == campaign_id)
+            .order_by(ChecklistItem.created_at.asc())
+        )
+        return list(result.scalars().all())
 
     async def get_evidencias(self, item_id: UUID) -> list[FileAsset]:
         """Retorna evidências ativas vinculadas ao item, ordenadas por data de criação."""

@@ -26,6 +26,13 @@ class ChecklistItem(Base):
     """
 
     __tablename__ = "checklist_items"
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "campaign_id",
+            "template_id",
+            name="uq_checklist_items_campaign_template",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
