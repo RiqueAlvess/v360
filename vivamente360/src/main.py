@@ -11,21 +11,15 @@ from src.shared.exceptions import DomainException
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Startup: initialize database connection pool
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    # Startup: expor engine e session factory centralizados via app.state
+    from src.infrastructure.database.session import AsyncSessionLocal, engine
 
-    engine = create_async_engine(
-        settings.DATABASE_URL,
-        pool_size=settings.DATABASE_POOL_SIZE,
-        max_overflow=settings.DATABASE_MAX_OVERFLOW,
-        echo=settings.DEBUG,
-    )
     app.state.engine = engine
-    app.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    app.state.session_factory = AsyncSessionLocal
 
     yield
 
-    # Shutdown: dispose connection pool
+    # Shutdown: liberar pool de conexões
     await engine.dispose()
 
 
