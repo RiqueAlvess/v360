@@ -67,3 +67,13 @@ class ConflictError(DomainException):
 
     def __init__(self, detail: str = "Resource conflict.") -> None:
         super().__init__(detail=detail)
+
+
+class RateLimitError(DomainException):
+    """Raised when a rate limit is exceeded (e.g. max emails per 24h for a recipient)."""
+
+    status_code: int = 429
+    detail: str = "Rate limit exceeded. Try again later."
+
+    def __init__(self, detail: str = "Rate limit exceeded. Try again later.") -> None:
+        super().__init__(detail=detail)

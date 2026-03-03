@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = Field(default="re_placeholder")
     EMAIL_FROM: str = "noreply@vivamente.com.br"
     EMAIL_FROM_NAME: str = "VIVAMENTE 360º"
+    RESEND_WEBHOOK_SECRET: str = Field(default="whsec_placeholder")
 
     @field_validator("DATABASE_URL")
     @classmethod

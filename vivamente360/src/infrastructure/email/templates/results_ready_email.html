@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resultados Disponíveis — VIVAMENTE 360°</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f6f9; color: #333333; }
+    .wrapper { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .header { background-color: #059669; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .body { padding: 36px 40px; }
+    .body p { font-size: 15px; line-height: 1.7; margin: 0 0 16px; }
+    .stats-grid { display: table; width: 100%; border-collapse: collapse; margin: 24px 0; }
+    .stat-cell { display: table-cell; text-align: center; padding: 16px; background-color: #ecfdf5; border: 1px solid #d1fae5; border-radius: 6px; width: 50%; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #059669; }
+    .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .cta-wrapper { text-align: center; margin: 32px 0; }
+    .cta-button { display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 6px; font-size: 16px; font-weight: 600; }
+    .privacy-notice { background-color: #f0f4ff; border-left: 4px solid #1a56db; padding: 14px 18px; border-radius: 0 4px 4px 0; font-size: 13px; color: #555; margin-top: 24px; }
+    .footer { background-color: #f4f6f9; padding: 20px 40px; text-align: center; font-size: 12px; color: #888888; }
+    .footer a { color: #1a56db; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Resultados Disponíveis</h1>
+    </div>
+    <div class="body">
+      <p>Olá, equipe de RH de <strong>${company_name}</strong>,</p>
+      <p>
+        O dashboard de resultados da campanha <strong>${campaign_name}</strong> está
+        disponível! O mínimo de respostas para garantir o anonimato estatístico foi atingido.
+      </p>
+      <table style="width:100%; border-collapse:separate; border-spacing:8px; margin:24px 0;">
+        <tr>
+          <td style="text-align:center; padding:16px; background-color:#ecfdf5; border:1px solid #d1fae5; border-radius:6px;">
+            <div style="font-size:28px; font-weight:700; color:#059669;">${total_responses}</div>
+            <div style="font-size:12px; color:#6b7280; margin-top:4px;">Respostas Recebidas</div>
+          </td>
+          <td style="text-align:center; padding:16px; background-color:#ecfdf5; border:1px solid #d1fae5; border-radius:6px;">
+            <div style="font-size:28px; font-weight:700; color:#059669;">${participation_rate}%</div>
+            <div style="font-size:12px; color:#6b7280; margin-top:4px;">Taxa de Participação</div>
+          </td>
+        </tr>
+      </table>
+      <div class="cta-wrapper">
+        <a class="cta-button" href="${dashboard_url}">Acessar Dashboard</a>
+      </div>
+      <div class="privacy-notice">
+        <strong>Privacidade garantida:</strong> Os resultados são apresentados de forma
+        agregada. Nenhuma resposta individual pode ser identificada. O sistema só liberou
+        o dashboard após atingir o mínimo de respostas para k-anonimato.
+      </div>
+    </div>
+    <div class="footer">
+      <p>
+        Relatório gerado pela plataforma <a href="https://vivamente.com.br">VIVAMENTE 360°</a>.
+        Para suporte, acesse nossa <a href="https://vivamente.com.br/suporte">central de ajuda</a>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
