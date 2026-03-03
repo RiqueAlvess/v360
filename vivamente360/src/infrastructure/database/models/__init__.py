@@ -2,6 +2,7 @@
 # OBRIGATÓRIO: o env.py do Alembic importa este módulo para autogenerate funcionar.
 from src.infrastructure.database.models.base import Base, TimestampMixin
 from src.infrastructure.database.models.campaign import Campaign
+from src.infrastructure.database.models.file_asset import FileAsset
 from src.infrastructure.database.models.company import Company
 from src.infrastructure.database.models.dim_estrutura import DimEstrutura
 from src.infrastructure.database.models.dim_tempo import DimTempo
@@ -33,4 +34,5 @@ __all__ = [
     "DimTempo",
     "DimEstrutura",
     "FactScoreDimensao",
+    "FileAsset",
 ]
