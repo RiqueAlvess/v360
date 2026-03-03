@@ -65,11 +65,9 @@ def create_app() -> FastAPI:
 
 
 def _register_routers(app: FastAPI) -> None:
-    # Routers will be added here as modules are implemented
-    # Example:
-    # from src.presentation.routers import auth, companies, users
-    # app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-    pass
+    from src.presentation.routers.auth_router import router as auth_router
+
+    app.include_router(auth_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()

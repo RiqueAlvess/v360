@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
@@ -29,6 +29,7 @@ class User(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
+    nome: Mapped[Optional[str]] = mapped_column(sa.String(255), nullable=True)
     # SHA-256 hex digest do email em plaintext — para lookups sem expor o email
     email_hash: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     # Email cifrado com AES-256-GCM — nunca em plaintext no banco
