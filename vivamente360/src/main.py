@@ -66,27 +66,20 @@ def create_app() -> FastAPI:
 
 def _register_routers(app: FastAPI) -> None:
     from src.presentation.routers.auth_router import router as auth_router
+    from src.presentation.routers.campaign_router import router as campaign_router
+    from src.presentation.routers.checklist_router import router as checklist_router
     from src.presentation.routers.dashboard_router import router as dashboard_router
-    from src.presentation.routers.survey_response_router import (
-        router as survey_response_router,
-    )
-
-    app.include_router(auth_router, prefix="/api/v1")
-    app.include_router(dashboard_router, prefix="/api/v1")
-    app.include_router(survey_response_router, prefix="/api/v1")
     from src.presentation.routers.email_router import router as email_router
     from src.presentation.routers.survey_response_router import (
         router as survey_response_router,
     )
 
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(campaign_router, prefix="/api/v1")
+    app.include_router(checklist_router, prefix="/api/v1")
     app.include_router(dashboard_router, prefix="/api/v1")
     app.include_router(email_router, prefix="/api/v1")
     app.include_router(survey_response_router, prefix="/api/v1")
-    from src.presentation.routers.email_router import router as email_router
-
-    app.include_router(auth_router, prefix="/api/v1")
-    app.include_router(email_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()
