@@ -8,3 +8,4 @@ class EmailTemplateType(str, Enum):
     REMINDER_EMAIL = "reminder_email"
     RESULTS_READY_EMAIL = "results_ready_email"
     CAMPAIGN_CLOSED_EMAIL = "campaign_closed_email"
+    ACTION_PLAN_COMPLETED = "action_plan_completed"

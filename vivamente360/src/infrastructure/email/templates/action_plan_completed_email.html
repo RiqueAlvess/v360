@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plano de Ação Concluído — VIVAMENTE 360°</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f6f9; color: #333333; }
+    .wrapper { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .header { background-color: #059669; padding: 32px 40px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .header .badge { display: inline-block; background-color: #d1fae5; color: #065f46; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-top: 12px; }
+    .body { padding: 36px 40px; }
+    .body p { font-size: 15px; line-height: 1.7; margin: 0 0 16px; }
+    .plan-card { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px 24px; margin: 24px 0; }
+    .plan-card .label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .plan-card .value { font-size: 15px; color: #111827; font-weight: 600; }
+    .plan-card .value-normal { font-size: 14px; color: #374151; font-weight: 400; margin-top: 4px; }
+    .observacao-box { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 4px 4px 0; font-size: 13px; color: #555; margin: 24px 0; }
+    .footer { background-color: #f4f6f9; padding: 20px 40px; text-align: center; font-size: 12px; color: #888888; }
+    .footer a { color: #1a56db; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Plano de Ação Concluído</h1>
+      <span class="badge">✓ Concluído com sucesso</span>
+    </div>
+    <div class="body">
+      <p>Olá, <strong>${nome_responsavel}</strong>,</p>
+      <p>
+        Um plano de ação que você criou foi marcado como <strong>concluído</strong>.
+        Veja os detalhes abaixo:
+      </p>
+      <div class="plan-card">
+        <div class="label">Plano de Ação</div>
+        <div class="value">${titulo_plano}</div>
+        <div class="label" style="margin-top: 16px;">Data de Conclusão</div>
+        <div class="value-normal">${concluido_em}</div>
+      </div>
+      <p>
+        O ciclo de diagnóstico psicossocial foi fechado com sucesso:
+        <strong>diagnóstico → plano → execução → evidência</strong>.
+        Acesse a plataforma para visualizar o histórico completo e as evidências registradas.
+      </p>
+    </div>
+    <div class="footer">
+      <p>
+        Notificação automática gerada pela plataforma
+        <a href="https://vivamente.com.br">VIVAMENTE 360°</a>.
+        Para suporte, acesse nossa <a href="https://vivamente.com.br/suporte">central de ajuda</a>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -16,6 +16,7 @@ _SUBJECTS: dict[str, str] = {
     "reminder_email": "Lembrete: sua pesquisa ainda está aberta — VIVAMENTE 360°",
     "results_ready_email": "Resultados da campanha disponíveis — VIVAMENTE 360°",
     "campaign_closed_email": "Campanha encerrada com sucesso — VIVAMENTE 360°",
+    "action_plan_completed": "Plano de ação concluído com sucesso — VIVAMENTE 360°",
 }
 
 _TEMPLATES_DIR: Path = Path(__file__).parent / "templates"

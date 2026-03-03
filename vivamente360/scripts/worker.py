@@ -36,6 +36,8 @@ if _PROJECT_ROOT not in sys.path:
 
 from src.domain.enums.task_queue_type import TaskQueueType  # noqa: E402
 from src.infrastructure.database.session import AsyncSessionLocal  # noqa: E402
+from src.infrastructure.queue.handlers.notify_plan_completed_handler import (  # noqa: E402
+    NotifyPlanCompletedHandler,
 from src.infrastructure.queue.handlers.analyze_sentiment_handler import (  # noqa: E402
     AnalyzeSentimentHandler,
 )
@@ -93,6 +95,10 @@ async def main() -> None:
             TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
             CleanupTokensHandler,  # type: ignore[arg-type]
         )
+        worker.register(
+            TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
+            NotifyPlanCompletedHandler,
+        )
 
         logger.info(
             "Handlers registrados: %s",
@@ -101,6 +107,7 @@ async def main() -> None:
                 TaskQueueType.COMPUTE_SCORES.value,
                 TaskQueueType.ANALYZE_SENTIMENT.value,
                 TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
+                TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
             ],
         )
 
