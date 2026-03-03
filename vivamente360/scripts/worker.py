@@ -11,6 +11,7 @@ em paralelo sem risco de processar a mesma tarefa.
 Handlers registrados:
     - send_email        → SendEmailHandler
     - compute_scores    → RebuildAnalyticsHandler
+    - analyze_sentiment → AnalyzeSentimentHandler
     - cleanup_expired_tokens → (handler inline: TokenRepository.cleanup_expired)
 
 Para rodar múltiplos workers em produção:
@@ -37,6 +38,8 @@ from src.domain.enums.task_queue_type import TaskQueueType  # noqa: E402
 from src.infrastructure.database.session import AsyncSessionLocal  # noqa: E402
 from src.infrastructure.queue.handlers.notify_plan_completed_handler import (  # noqa: E402
     NotifyPlanCompletedHandler,
+from src.infrastructure.queue.handlers.analyze_sentiment_handler import (  # noqa: E402
+    AnalyzeSentimentHandler,
 )
 from src.infrastructure.queue.handlers.rebuild_analytics_handler import (  # noqa: E402
     RebuildAnalyticsHandler,
@@ -87,6 +90,7 @@ async def main() -> None:
         # Registrar todos os handlers disponíveis
         worker.register(TaskQueueType.SEND_EMAIL.value, SendEmailHandler)
         worker.register(TaskQueueType.COMPUTE_SCORES.value, RebuildAnalyticsHandler)
+        worker.register(TaskQueueType.ANALYZE_SENTIMENT.value, AnalyzeSentimentHandler)
         worker.register(
             TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
             CleanupTokensHandler,  # type: ignore[arg-type]
@@ -101,6 +105,7 @@ async def main() -> None:
             [
                 TaskQueueType.SEND_EMAIL.value,
                 TaskQueueType.COMPUTE_SCORES.value,
+                TaskQueueType.ANALYZE_SENTIMENT.value,
                 TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
                 TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
             ],

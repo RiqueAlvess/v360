@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     EMAIL_FROM_NAME: str = "VIVAMENTE 360º"
     RESEND_WEBHOOK_SECRET: str = Field(default="whsec_placeholder")
 
+    # IA — OpenRouter (análise de sentimento via LLM)
+    OPENROUTER_API_KEY: str = Field(default="sk-or-placeholder")
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = "openai/gpt-4o-mini"
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
