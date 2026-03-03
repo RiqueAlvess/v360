@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
@@ -26,6 +26,10 @@ class FactScoreDimensao(Base):
 
     A constraint UNIQUE em (campaign_id, dim_tempo_id, dim_estrutura_id, dimensao)
     garante idempotência: o worker pode executar múltiplas vezes sem duplicar dados.
+
+    sentimento_score_medio: média dos scores de sentimento das respostas que
+    forneceram texto livre com consentimento. NULL quando nenhuma resposta da
+    campanha contém análise de sentimento concluída.
     """
 
     __tablename__ = "fact_score_dimensao"
@@ -61,6 +65,11 @@ class FactScoreDimensao(Base):
         nullable=False,
     )
     total_respostas: Mapped[int] = mapped_column(sa.Integer, nullable=False)
+    # Score médio de sentimento agregado (NULL se nenhuma resposta tem sentimento)
+    sentimento_score_medio: Mapped[Optional[Decimal]] = mapped_column(
+        sa.Numeric(4, 3),
+        nullable=True,
+    )
     computed_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True),
         server_default=sa.func.now(),

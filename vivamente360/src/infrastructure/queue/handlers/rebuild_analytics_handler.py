@@ -14,14 +14,16 @@ Pipeline:
     1. Buscar TODAS as respostas da campanha (uma query, sem N+1).
     2. Determinar company_id a partir da campanha.
     3. Calcular scores por dimensão usando ScoreService.
-    4. Obter ou criar dim_tempo para a data de hoje.
-    5. Obter ou criar dim_estrutura para a empresa (nível companhia).
-    6. Upsert em fact_score_dimensao (idempotente via ON CONFLICT DO UPDATE).
+    4. Calcular sentimento_score_medio (média das respostas com sentimento_score não-nulo).
+    5. Obter ou criar dim_tempo para a data de hoje.
+    6. Obter ou criar dim_estrutura para a empresa (nível companhia).
+    7. Upsert em fact_score_dimensao (idempotente via ON CONFLICT DO UPDATE).
 """
 import logging
 from datetime import date, timezone
 from datetime import datetime as dt
-from typing import Any
+from decimal import Decimal
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -59,8 +61,9 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
         2. Carregar campanha para obter company_id.
         3. Carregar TODAS as respostas da campanha em uma query.
         4. Calcular scores por dimensão com ScoreService (em memória).
-        5. Garantir dim_tempo e dim_estrutura existam.
-        6. Upsert em fact_score_dimensao para cada dimensão com dados.
+        5. Calcular sentimento_score_medio a partir das respostas analisadas.
+        6. Garantir dim_tempo e dim_estrutura existam.
+        7. Upsert em fact_score_dimensao para cada dimensão com dados.
 
         Args:
             payload: Dicionário com campaign_id.
@@ -94,19 +97,23 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
         #    (elimina N+1 — Regra R3)
         # ---------------------------------------------------------------
         respostas_result = await self._db.execute(
-            select(SurveyResponse.respostas).where(
+            select(SurveyResponse.respostas, SurveyResponse.sentimento_score).where(
                 SurveyResponse.campaign_id == campaign_id
             )
         )
-        respostas_lista: list[dict[str, Any]] = [
-            row[0] for row in respostas_result.all()
+        rows = respostas_result.all()
+
+        respostas_lista: list[dict[str, Any]] = [row[0] for row in rows]
+        sentimento_scores: list[Decimal] = [
+            row[1] for row in rows if row[1] is not None
         ]
 
         total_respostas_campanha = len(respostas_lista)
         logger.info(
-            "Respostas carregadas: campaign_id=%s total=%d",
+            "Respostas carregadas: campaign_id=%s total=%d com_sentimento=%d",
             campaign_id,
             total_respostas_campanha,
+            len(sentimento_scores),
         )
 
         if total_respostas_campanha == 0:
@@ -116,19 +123,36 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
             return
 
         # ---------------------------------------------------------------
-        # 3. Calcular scores por dimensão em memória (sem I/O adicional)
+        # 3. Calcular sentimento_score_medio (em memória, sem I/O adicional)
+        #    Apenas respostas com sentimento_score não-nulo contribuem
+        # ---------------------------------------------------------------
+        sentimento_score_medio: Optional[Decimal] = None
+        if sentimento_scores:
+            soma = sum(sentimento_scores, Decimal("0"))
+            sentimento_score_medio = (soma / len(sentimento_scores)).quantize(
+                Decimal("0.001")
+            )
+            logger.debug(
+                "Sentimento médio calculado: campaign_id=%s score=%.3f n=%d",
+                campaign_id,
+                float(sentimento_score_medio),
+                len(sentimento_scores),
+            )
+
+        # ---------------------------------------------------------------
+        # 4. Calcular scores por dimensão em memória (sem I/O adicional)
         # ---------------------------------------------------------------
         score_service = ScoreService()
         analytics_repo = SQLAnalyticsRepository(self._db)
 
         # ---------------------------------------------------------------
-        # 4. Garantir dim_tempo para a data de hoje
+        # 5. Garantir dim_tempo para a data de hoje
         # ---------------------------------------------------------------
         hoje: date = dt.now(tz=timezone.utc).date()
         dim_tempo = await analytics_repo.get_or_create_dim_tempo(hoje)
 
         # ---------------------------------------------------------------
-        # 5. Garantir dim_estrutura de nível empresa (sem hierarquia)
+        # 6. Garantir dim_estrutura de nível empresa (sem hierarquia)
         #    Futuras versões poderão segmentar por unidade/setor/cargo
         #    quando os dados estruturais estiverem disponíveis nas respostas
         # ---------------------------------------------------------------
@@ -137,7 +161,7 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
         )
 
         # ---------------------------------------------------------------
-        # 6. Upsert em fact_score_dimensao para cada dimensão HSE-IT
+        # 7. Upsert em fact_score_dimensao para cada dimensão HSE-IT
         # ---------------------------------------------------------------
         dimensoes_computadas = 0
         for dimensao in DimensaoHSE:
@@ -162,6 +186,7 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
                 score_medio=score_medio,
                 nivel_risco=nivel_risco,
                 total_respostas=total_dim,
+                sentimento_score_medio=sentimento_score_medio,
             )
             dimensoes_computadas += 1
             logger.debug(
@@ -174,10 +199,11 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
 
         logger.info(
             "Analytics reconstruído com sucesso: campaign_id=%s "
-            "dimensoes=%d total_respostas=%d",
+            "dimensoes=%d total_respostas=%d sentimento_medio=%s",
             campaign_id,
             dimensoes_computadas,
             total_respostas_campanha,
+            sentimento_score_medio,
         )
 
     def _validate_payload(self, payload: dict[str, Any]) -> None:

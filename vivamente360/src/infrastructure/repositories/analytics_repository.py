@@ -59,6 +59,7 @@ class AnalyticsRepository(ABC):
         score_medio: Decimal,
         nivel_risco: NivelRisco,
         total_respostas: int,
+        sentimento_score_medio: Optional[Decimal] = None,
     ) -> None:
         """Insere ou atualiza um registro em fact_score_dimensao (idempotente)."""
         ...
@@ -199,6 +200,7 @@ class SQLAnalyticsRepository(AnalyticsRepository):
         score_medio: Decimal,
         nivel_risco: NivelRisco,
         total_respostas: int,
+        sentimento_score_medio: Optional[Decimal] = None,
     ) -> None:
         """Insere ou atualiza fact_score_dimensao usando INSERT ... ON CONFLICT DO UPDATE.
 
@@ -213,6 +215,8 @@ class SQLAnalyticsRepository(AnalyticsRepository):
             score_medio: Score médio calculado para a dimensão.
             nivel_risco: Nível de risco classificado pelo ScoreService.
             total_respostas: Número de respostas que compõem o cálculo.
+            sentimento_score_medio: Média dos scores de sentimento das respostas
+                com texto livre analisado. NULL quando nenhuma resposta tem sentimento.
         """
         stmt = pg_insert(FactScoreDimensao).values(
             id=uuid.uuid4(),
@@ -223,15 +227,17 @@ class SQLAnalyticsRepository(AnalyticsRepository):
             score_medio=score_medio,
             nivel_risco=nivel_risco,
             total_respostas=total_respostas,
+            sentimento_score_medio=sentimento_score_medio,
             computed_at=sa.func.now(),
         )
-        # ON CONFLICT: atualiza score, risco, total e computed_at
+        # ON CONFLICT: atualiza score, risco, total, sentimento e computed_at
         stmt = stmt.on_conflict_do_update(
             constraint="uq_fact_score_dimensao",
             set_={
                 "score_medio": stmt.excluded.score_medio,
                 "nivel_risco": stmt.excluded.nivel_risco,
                 "total_respostas": stmt.excluded.total_respostas,
+                "sentimento_score_medio": stmt.excluded.sentimento_score_medio,
                 "computed_at": sa.func.now(),
             },
         )
