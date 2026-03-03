@@ -9,9 +9,11 @@ via SELECT FOR UPDATE SKIP LOCKED. Múltiplos workers podem ser iniciados
 em paralelo sem risco de processar a mesma tarefa.
 
 Handlers registrados:
-    - send_email        → SendEmailHandler
-    - compute_scores    → RebuildAnalyticsHandler
-    - analyze_sentiment → AnalyzeSentimentHandler
+    - send_email          → SendEmailHandler
+    - compute_scores      → RebuildAnalyticsHandler
+    - analyze_sentiment   → AnalyzeSentimentHandler
+    - run_ai_analysis     → RunAiAnalysisHandler
+    - notify_plan_completed → NotifyPlanCompletedHandler
     - cleanup_expired_tokens → (handler inline: TokenRepository.cleanup_expired)
 
 Para rodar múltiplos workers em produção:
@@ -36,13 +38,17 @@ if _PROJECT_ROOT not in sys.path:
 
 from src.domain.enums.task_queue_type import TaskQueueType  # noqa: E402
 from src.infrastructure.database.session import AsyncSessionLocal  # noqa: E402
-from src.infrastructure.queue.handlers.notify_plan_completed_handler import (  # noqa: E402
-    NotifyPlanCompletedHandler,
 from src.infrastructure.queue.handlers.analyze_sentiment_handler import (  # noqa: E402
     AnalyzeSentimentHandler,
 )
+from src.infrastructure.queue.handlers.notify_plan_completed_handler import (  # noqa: E402
+    NotifyPlanCompletedHandler,
+)
 from src.infrastructure.queue.handlers.rebuild_analytics_handler import (  # noqa: E402
     RebuildAnalyticsHandler,
+)
+from src.infrastructure.queue.handlers.run_ai_analysis_handler import (  # noqa: E402
+    RunAiAnalysisHandler,
 )
 from src.infrastructure.queue.handlers.send_email_handler import (  # noqa: E402
     SendEmailHandler,
@@ -99,6 +105,7 @@ async def main() -> None:
             TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
             NotifyPlanCompletedHandler,
         )
+        worker.register(TaskQueueType.RUN_AI_ANALYSIS.value, RunAiAnalysisHandler)
 
         logger.info(
             "Handlers registrados: %s",
@@ -108,6 +115,7 @@ async def main() -> None:
                 TaskQueueType.ANALYZE_SENTIMENT.value,
                 TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
                 TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
+                TaskQueueType.RUN_AI_ANALYSIS.value,
             ],
         )
 

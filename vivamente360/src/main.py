@@ -66,6 +66,7 @@ def create_app() -> FastAPI:
 
 def _register_routers(app: FastAPI) -> None:
     from src.presentation.routers.action_plan_router import router as action_plan_router
+    from src.presentation.routers.ai_analysis_router import router as ai_analysis_router
     from src.presentation.routers.auth_router import router as auth_router
     from src.presentation.routers.campaign_router import router as campaign_router
     from src.presentation.routers.checklist_router import router as checklist_router
@@ -82,6 +83,7 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(email_router, prefix="/api/v1")
     app.include_router(survey_response_router, prefix="/api/v1")
     app.include_router(action_plan_router, prefix="/api/v1")
+    app.include_router(ai_analysis_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()

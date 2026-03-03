@@ -11,3 +11,4 @@ class TaskQueueType(str, Enum):
     CLEANUP_EXPIRED_TOKENS = "cleanup_expired_tokens"
     NOTIFY_PLAN_COMPLETED = "notify_plan_completed"
     ANALYZE_SENTIMENT = "analyze_sentiment"
+    RUN_AI_ANALYSIS = "run_ai_analysis"
