@@ -76,6 +76,10 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(dashboard_router, prefix="/api/v1")
     app.include_router(email_router, prefix="/api/v1")
     app.include_router(survey_response_router, prefix="/api/v1")
+    from src.presentation.routers.email_router import router as email_router
+
+    app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(email_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()
