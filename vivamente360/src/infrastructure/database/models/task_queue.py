@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -32,13 +32,24 @@ class TaskQueue(Base, TimestampMixin):
         default=TaskQueueStatus.PENDING,
     )
     tentativas: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    max_tentativas: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=3)
     agendado_para: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True),
         server_default=sa.func.now(),
         nullable=False,
     )
+    iniciado_em: Mapped[Optional[datetime]] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+    )
+    concluido_em: Mapped[Optional[datetime]] = mapped_column(
+        sa.DateTime(timezone=True),
+        nullable=True,
+    )
+    erro: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
 
     # Índice composto para performance do worker (filtra por status + ordena por agendado_para)
+    # Índice parcial adicionado via migration Blueprint 04 (WHERE status = 'pending')
     __table_args__ = (
         sa.Index("ix_task_queue_status_agendado_para", "status", "agendado_para"),
     )
