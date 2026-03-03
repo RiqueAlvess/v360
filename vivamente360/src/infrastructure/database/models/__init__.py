@@ -1,5 +1,6 @@
 # Importar todos os modelos para garantir que estejam registrados no metadata do Base.
 # OBRIGATÓRIO: o env.py do Alembic importa este módulo para autogenerate funcionar.
+from src.infrastructure.database.models.action_plan import ActionPlan
 from src.infrastructure.database.models.base import Base, TimestampMixin
 from src.infrastructure.database.models.campaign import Campaign
 from src.infrastructure.database.models.checklist_item import ChecklistItem
@@ -22,6 +23,7 @@ from src.infrastructure.database.models.user import User
 __all__ = [
     "Base",
     "TimestampMixin",
+    "ActionPlan",
     "Company",
     "User",
     "RefreshToken",
