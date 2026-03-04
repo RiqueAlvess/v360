@@ -16,3 +16,5 @@ class TaskQueueType(str, Enum):
     NOTIFY_WHISTLEBLOWER_ADMIN = "notify_whistleblower_admin"
     # Módulo 08: job diário de alertas de campanhas e planos de ação
     CHECK_CAMPAIGN_ALERTS = "check_campaign_alerts"
+    # Módulo 09: atualiza view materializada campaign_comparison após rebuild de analytics
+    REFRESH_CAMPAIGN_COMPARISON = "refresh_campaign_comparison"
