@@ -20,10 +20,14 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.services.action_plan_service import ActionPlanService
+from src.application.services.notification_service import NotificationService
 from src.domain.enums.action_plan_status import ActionPlanStatus
 from src.domain.enums.nivel_risco import NivelRisco
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.action_plan_repository import SQLActionPlanRepository
+from src.infrastructure.repositories.notification_repository import (
+    SQLNotificationRepository,
+)
 from src.presentation.dependencies.auth import CurrentUser, get_current_user
 from src.presentation.schemas.action_plan_schemas import (
     ActionPlanCreate,
@@ -50,6 +54,10 @@ def _build_service(db: AsyncSession) -> ActionPlanService:
     return ActionPlanService(
         action_plan_repo=SQLActionPlanRepository(db),
         db=db,
+        notification_service=NotificationService(
+            notification_repo=SQLNotificationRepository(db),
+            db=db,
+        ),
     )
 
 

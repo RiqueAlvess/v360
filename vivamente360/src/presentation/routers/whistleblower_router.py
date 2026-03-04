@@ -20,10 +20,14 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.application.services.notification_service import NotificationService
 from src.application.services.whistleblower_service import WhistleblowerService
 from src.domain.enums.whistleblower_status import WhistleblowerStatus
 from src.infrastructure.database.session import get_db
 from src.infrastructure.queue.task_service import TaskService
+from src.infrastructure.repositories.notification_repository import (
+    SQLNotificationRepository,
+)
 from src.infrastructure.repositories.whistleblower_repository import (
     SQLWhistleblowerRepository,
 )
@@ -65,6 +69,10 @@ def _build_service(db: AsyncSession) -> WhistleblowerService:
     return WhistleblowerService(
         repo=SQLWhistleblowerRepository(db),
         task_service=TaskService(db),
+        notification_service=NotificationService(
+            notification_repo=SQLNotificationRepository(db),
+            db=db,
+        ),
     )
 
 

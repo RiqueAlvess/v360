@@ -15,9 +15,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.services.campaign_service import CampaignService
 from src.application.services.checklist_service import ChecklistService
+from src.application.services.notification_service import NotificationService
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.campaign_repository import SQLCampaignRepository
 from src.infrastructure.repositories.checklist_repository import SQLChecklistRepository
+from src.infrastructure.repositories.notification_repository import (
+    SQLNotificationRepository,
+)
 from src.presentation.dependencies.auth import CurrentUser, get_current_user
 from src.presentation.schemas.checklist_schemas import (
     CampaignCreateRequest,
@@ -39,6 +43,10 @@ def _build_service(db: AsyncSession) -> CampaignService:
     return CampaignService(
         campaign_repo=SQLCampaignRepository(db),
         checklist_service=checklist_service,
+        notification_service=NotificationService(
+            notification_repo=SQLNotificationRepository(db),
+            db=db,
+        ),
     )
 
 
