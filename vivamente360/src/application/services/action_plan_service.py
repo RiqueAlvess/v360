@@ -11,8 +11,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.application.services.notification_service import NotificationService
 from src.domain.enums.action_plan_status import ActionPlanStatus
 from src.domain.enums.nivel_risco import NivelRisco
+from src.domain.enums.notification_tipo import NotificationTipo
 from src.domain.enums.task_queue_type import TaskQueueType
 from src.domain.enums.user_role import UserRole
 from src.infrastructure.database.models.action_plan import ActionPlan
@@ -40,9 +42,11 @@ class ActionPlanService:
         self,
         action_plan_repo: ActionPlanRepository,
         db: AsyncSession,
+        notification_service: Optional[NotificationService] = None,
     ) -> None:
         self._repo = action_plan_repo
         self._task_service = TaskService(db)
+        self._notification_service = notification_service
 
     async def list_plans(
         self,
@@ -304,7 +308,7 @@ class ActionPlanService:
             concluido_em=concluido_em,
         )
 
-        # Regra do módulo: ao concluir um plano, enfileirar notificação para o criador
+        # Regra do módulo: ao concluir um plano, enfileirar notificação por email
         if new_status == ActionPlanStatus.CONCLUIDO:
             await self._task_service.enqueue(
                 tipo=TaskQueueType.NOTIFY_PLAN_COMPLETED,
@@ -318,6 +322,22 @@ class ActionPlanService:
                     "concluido_em": concluido_em.isoformat() if concluido_em else None,
                 },
             )
+
+            # Notificação in-app para o criador do plano (Módulo 08)
+            if self._notification_service is not None:
+                responsavel_id = plan.responsavel_id or plan.created_by
+                await self._notification_service.notify(
+                    company_id=company_id,
+                    user_id=responsavel_id,
+                    tipo=NotificationTipo.RELATORIO_PRONTO,
+                    titulo="Plano de ação concluído",
+                    mensagem=f"O plano '{plan.titulo}' foi marcado como concluído.",
+                    link=f"/action-plans/{plan.campaign_id}/{plan_id}",
+                    metadata={
+                        "plan_id": str(plan_id),
+                        "campaign_id": str(plan.campaign_id),
+                    },
+                )
 
         return updated_plan
 

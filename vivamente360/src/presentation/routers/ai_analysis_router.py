@@ -102,6 +102,7 @@ async def request_analysis(
             "analysis_id": str(analysis.id),
             "campaign_id": str(body.campaign_id),
             "company_id": str(current_user.company_id),
+            "requested_by": str(current_user.user_id),
             "setor_id": str(body.setor_id) if body.setor_id else None,
             "dimensao": body.dimensao,
             "tipo": body.tipo,

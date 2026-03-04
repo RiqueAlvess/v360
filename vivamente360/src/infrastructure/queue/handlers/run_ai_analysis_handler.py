@@ -44,9 +44,14 @@ from src.infrastructure.database.models.ai_analysis import AiAnalysis
 from src.infrastructure.database.models.fact_score_dimensao import FactScoreDimensao
 from src.infrastructure.database.models.sector import Sector
 from src.infrastructure.database.models.survey_response import SurveyResponse
+from src.application.services.notification_service import NotificationService
+from src.domain.enums.notification_tipo import NotificationTipo
 from src.infrastructure.queue.base_handler import BaseTaskHandler
 from src.infrastructure.repositories.ai_analysis_repository import (
     SQLAiAnalysisRepository,
+)
+from src.infrastructure.repositories.notification_repository import (
+    SQLNotificationRepository,
 )
 from src.shared.config import settings
 from src.shared.security import decrypt_data
@@ -188,6 +193,10 @@ class RunAiAnalysisHandler(BaseTaskHandler):
     def __init__(self, db: AsyncSession) -> None:
         super().__init__(db)
         self._adapter = OpenRouterAdapter()
+        self._notification_service = NotificationService(
+            notification_repo=SQLNotificationRepository(db),
+            db=db,
+        )
 
     async def execute(self, payload: dict[str, Any]) -> None:
         """Executa a análise de IA completa.
@@ -208,6 +217,10 @@ class RunAiAnalysisHandler(BaseTaskHandler):
         campaign_id: UUID = self._parse_uuid(payload["campaign_id"], "campaign_id")
         company_id: UUID = self._parse_uuid(payload["company_id"], "company_id")
         tipo: str = payload["tipo"]
+
+        requested_by: Optional[UUID] = None
+        if payload.get("requested_by"):
+            requested_by = self._parse_uuid(payload["requested_by"], "requested_by")
 
         setor_id: Optional[UUID] = None
         if payload.get("setor_id"):
@@ -346,6 +359,29 @@ class RunAiAnalysisHandler(BaseTaskHandler):
             tokens_output,
             model_usado,
         )
+
+        # -------------------------------------------------------------------
+        # 12. Notificação in-app para o solicitante (Módulo 08)
+        # -------------------------------------------------------------------
+        if requested_by is not None:
+            setor_label: str = await self._get_setor_nome(setor_id)
+            await self._notification_service.notify(
+                company_id=company_id,
+                user_id=requested_by,
+                tipo=NotificationTipo.ANALISE_IA_CONCLUIDA,
+                titulo="Análise de IA concluída",
+                mensagem=(
+                    f"A análise de IA para o setor '{setor_label}' foi concluída. "
+                    "Acesse o módulo de análises para ver o resultado."
+                ),
+                link=f"/ai-analyses/{analysis_id}",
+                metadata={
+                    "analysis_id": str(analysis_id),
+                    "campaign_id": str(campaign_id),
+                    "tipo": tipo,
+                },
+            )
+            await self._db.commit()
 
     # -----------------------------------------------------------------------
     # Métodos privados de suporte

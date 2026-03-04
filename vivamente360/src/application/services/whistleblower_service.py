@@ -22,7 +22,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.application.services.notification_service import NotificationService
+from src.domain.enums.notification_tipo import NotificationTipo
 from src.domain.enums.task_queue_type import TaskQueueType
+from src.domain.enums.user_role import UserRole
 from src.domain.enums.whistleblower_categoria import WhistleblowerCategoria
 from src.domain.enums.whistleblower_status import WhistleblowerStatus
 from src.infrastructure.queue.task_service import TaskService
@@ -62,9 +65,11 @@ class WhistleblowerService:
         self,
         repo: WhistleblowerRepository,
         task_service: TaskService,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self._repo = repo
         self._task_service = task_service
+        self._notification_service = notification_service
 
     async def resolve_company_slug(self, slug: str) -> UUID:
         """Resolve o slug público da empresa para seu UUID.
@@ -131,12 +136,33 @@ class WhistleblowerService:
             nome_opcional=nome_opcional,
         )
 
-        # Enfileira notificação para admins — processada pelo worker (Módulo 08)
+        # Enfileira notificação por email para admins — processada pelo worker
         # Nenhum dado do denunciante está no payload da task
         await self._task_service.enqueue(
             tipo=TaskQueueType.NOTIFY_WHISTLEBLOWER_ADMIN,
             payload={"company_id": str(company_id)},
         )
+
+        # Notificação in-app para admins e gestores (Módulo 08)
+        if self._notification_service is not None:
+            await self._notification_service.notify_by_role(
+                company_id=company_id,
+                role=UserRole.ADMIN,
+                tipo=NotificationTipo.NOVA_DENUNCIA,
+                titulo="Nova denúncia recebida",
+                mensagem="Um novo relato foi recebido no canal de denúncias.",
+                link="/admin/whistleblower",
+                metadata={"company_id": str(company_id)},
+            )
+            await self._notification_service.notify_by_role(
+                company_id=company_id,
+                role=UserRole.MANAGER,
+                tipo=NotificationTipo.NOVA_DENUNCIA,
+                titulo="Nova denúncia recebida",
+                mensagem="Um novo relato foi recebido no canal de denúncias.",
+                link="/admin/whistleblower",
+                metadata={"company_id": str(company_id)},
+            )
 
         logger.info(
             "Novo relato recebido: company_id=%s categoria=%s anonimo=%s",

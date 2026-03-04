@@ -10,9 +10,10 @@ from datetime import date
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.domain.enums.campaign_status import CampaignStatus
 from src.infrastructure.database.models.campaign import Campaign
 
 # Limite máximo de itens por página — Regra R4
@@ -59,6 +60,19 @@ class CampaignRepository(ABC):
 
         Returns:
             A campanha recém-criada com id gerado.
+        """
+        ...
+
+    @abstractmethod
+    async def update_status(
+        self,
+        campaign_id: UUID,
+        status: CampaignStatus,
+    ) -> Campaign:
+        """Atualiza o status de uma campanha.
+
+        Returns:
+            A Campaign com o status atualizado.
         """
         ...
 
@@ -119,5 +133,22 @@ class SQLCampaignRepository(CampaignRepository):
             data_fim=data_fim,
         )
         self._session.add(campaign)
+        await self._session.flush()
+        return campaign
+
+    async def update_status(
+        self,
+        campaign_id: UUID,
+        status: CampaignStatus,
+    ) -> Campaign:
+        """Atualiza o status da campanha e retorna o objeto atualizado."""
+        stmt = (
+            update(Campaign)
+            .where(Campaign.id == campaign_id)
+            .values(status=status)
+            .returning(Campaign)
+        )
+        result = await self._session.execute(stmt)
+        campaign: Campaign = result.scalar_one()
         await self._session.flush()
         return campaign

@@ -8,13 +8,17 @@ a partir dos templates ao criar uma nova campanha (Tarefa 07 do Módulo 02).
 """
 import math
 from datetime import date
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 from src.application.services.checklist_service import ChecklistService
+from src.application.services.notification_service import NotificationService
+from src.domain.enums.campaign_status import CampaignStatus
+from src.domain.enums.notification_tipo import NotificationTipo
+from src.domain.enums.user_role import UserRole
 from src.infrastructure.database.models.campaign import Campaign
 from src.infrastructure.repositories.campaign_repository import CampaignRepository
-from src.shared.exceptions import NotFoundError, ValidationError
+from src.shared.exceptions import ForbiddenError, NotFoundError, ValidationError
 
 
 class CampaignService:
@@ -28,9 +32,11 @@ class CampaignService:
         self,
         campaign_repo: CampaignRepository,
         checklist_service: ChecklistService,
+        notification_service: Optional[NotificationService] = None,
     ) -> None:
         self._campaign_repo = campaign_repo
         self._checklist_service = checklist_service
+        self._notification_service = notification_service
 
     async def create_campaign(
         self,
@@ -135,3 +141,58 @@ class CampaignService:
                 "pages": pages,
             },
         }
+
+    async def close_campaign(
+        self,
+        campaign_id: UUID,
+        company_id: UUID,
+    ) -> Campaign:
+        """Encerra manualmente uma campanha ativa e notifica HR/Admin.
+
+        Apenas campanhas ACTIVE podem ser encerradas manualmente.
+        Campanhas DRAFT devem ser ativadas antes de serem encerradas.
+
+        Args:
+            campaign_id: UUID da campanha a encerrar.
+            company_id: UUID da empresa autenticada (validação de acesso).
+
+        Returns:
+            A Campaign com status atualizado para COMPLETED.
+
+        Raises:
+            NotFoundError: Se a campanha não existir ou não pertencer à empresa.
+            ValidationError: Se a campanha não estiver ACTIVE.
+        """
+        campaign = await self._campaign_repo.get_by_id(campaign_id)
+        if campaign is None or campaign.company_id != company_id:
+            raise NotFoundError("Campaign", campaign_id)
+
+        if campaign.status != CampaignStatus.ACTIVE:
+            raise ValidationError(
+                f"Apenas campanhas ativas podem ser encerradas. "
+                f"Status atual: '{campaign.status.value}'.",
+                field="status",
+            )
+
+        updated = await self._campaign_repo.update_status(
+            campaign_id=campaign_id,
+            status=CampaignStatus.COMPLETED,
+        )
+
+        # Notificação in-app para HR e Admins (Módulo 08)
+        if self._notification_service is not None:
+            for role in (UserRole.ADMIN, UserRole.MANAGER):
+                await self._notification_service.notify_by_role(
+                    company_id=company_id,
+                    role=role,
+                    tipo=NotificationTipo.CAMPANHA_ENCERRADA,
+                    titulo="Campanha encerrada",
+                    mensagem=(
+                        f"A campanha '{campaign.nome}' foi encerrada. "
+                        "Acesse o dashboard para ver os resultados."
+                    ),
+                    link=f"/campaigns/{campaign_id}/dashboard",
+                    metadata={"campaign_id": str(campaign_id)},
+                )
+
+        return updated

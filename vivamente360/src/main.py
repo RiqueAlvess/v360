@@ -72,6 +72,9 @@ def _register_routers(app: FastAPI) -> None:
     from src.presentation.routers.checklist_router import router as checklist_router
     from src.presentation.routers.dashboard_router import router as dashboard_router
     from src.presentation.routers.email_router import router as email_router
+    from src.presentation.routers.notifications_router import (
+        router as notifications_router,
+    )
     from src.presentation.routers.survey_response_router import (
         router as survey_response_router,
     )
@@ -91,6 +94,8 @@ def _register_routers(app: FastAPI) -> None:
     # Módulo 07 — Canal de Denúncias Anônimo (NR-1 / Portaria MTE 1.419/2024)
     app.include_router(whistleblower_public_router, prefix="/api/v1")
     app.include_router(whistleblower_admin_router, prefix="/api/v1")
+    # Módulo 08 — Notificações In-App
+    app.include_router(notifications_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()
