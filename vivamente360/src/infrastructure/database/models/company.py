@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
@@ -28,6 +28,9 @@ class Company(Base, TimestampMixin):
     )
     nome: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     cnpj: Mapped[str] = mapped_column(sa.String(18), unique=True, nullable=False)
+    # Identificador público para URLs do canal de denúncias (Módulo 07 — NR-1)
+    # Exemplo: "acme-corp" → /denuncia/acme-corp/submit
+    slug: Mapped[Optional[str]] = mapped_column(sa.String(100), nullable=True, unique=True)
     plano: Mapped[CompanyPlan] = mapped_column(
         sa.Enum(CompanyPlan, name="company_plan"),
         nullable=False,

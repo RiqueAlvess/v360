@@ -12,3 +12,5 @@ class TaskQueueType(str, Enum):
     NOTIFY_PLAN_COMPLETED = "notify_plan_completed"
     ANALYZE_SENTIMENT = "analyze_sentiment"
     RUN_AI_ANALYSIS = "run_ai_analysis"
+    # Módulo 07: notifica admins ao receber novo relato no canal de denúncias
+    NOTIFY_WHISTLEBLOWER_ADMIN = "notify_whistleblower_admin"
