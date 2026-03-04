@@ -4,9 +4,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from src.shared.config import settings
 from src.shared.exceptions import DomainException
+
+# Instância global do rate limiter — chave por IP remoto
+limiter: Limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -34,6 +41,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Registrar o limiter no state da app (necessário para slowapi)
+    app.state.limiter = limiter
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -42,6 +52,12 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Rate limiting middleware — aplica limites globais por IP
+    app.add_middleware(SlowAPIMiddleware)
+
+    # Handler HTTP 429 para rate limit excedido
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # Global domain exception handler
     @app.exception_handler(DomainException)
@@ -72,6 +88,7 @@ def _register_routers(app: FastAPI) -> None:
     from src.presentation.routers.checklist_router import router as checklist_router
     from src.presentation.routers.dashboard_router import router as dashboard_router
     from src.presentation.routers.email_router import router as email_router
+    from src.presentation.routers.file_router import router as file_router
     from src.presentation.routers.notifications_router import (
         router as notifications_router,
     )
@@ -96,6 +113,8 @@ def _register_routers(app: FastAPI) -> None:
     app.include_router(whistleblower_admin_router, prefix="/api/v1")
     # Módulo 08 — Notificações In-App
     app.include_router(notifications_router, prefix="/api/v1")
+    # Módulo Storage — Upload de evidências (Cloudflare R2)
+    app.include_router(file_router, prefix="/api/v1")
 
 
 app: FastAPI = create_app()

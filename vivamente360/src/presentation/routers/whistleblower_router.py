@@ -16,7 +16,9 @@ FLUXO DE ANONIMATO:
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,6 +48,8 @@ from src.shared.exceptions import ForbiddenError
 # ---------------------------------------------------------------------------
 # Roteadores separados: público e autenticado
 # ---------------------------------------------------------------------------
+
+_limiter: Limiter = Limiter(key_func=get_remote_address)
 
 # Rotas públicas — sem autenticação. Sem log de IP. Sem cookie.
 public_router: APIRouter = APIRouter(
@@ -105,7 +109,9 @@ async def _set_rls_context(db: AsyncSession, company_id: UUID) -> None:
         "O denunciante deve guardar o token para consultar a resposta institucional."
     ),
 )
+@_limiter.limit("5/minute")
 async def submit_report(
+    request: Request,
     company_slug: str,
     body: WhistleblowerSubmitRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
