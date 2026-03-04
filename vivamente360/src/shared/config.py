@@ -49,11 +49,38 @@ class Settings(BaseSettings):
     # Rate limit de análises IA por empresa por hora (Módulo 06)
     OPENROUTER_RATE_LIMIT_PER_HOUR: int = 10
 
+    # Storage — Cloudflare R2 / S3-compatible
+    STORAGE_BUCKET_NAME: str = Field(default="vivamente-files")
+    STORAGE_ENDPOINT_URL: str = Field(default="https://placeholder.r2.cloudflarestorage.com")
+    STORAGE_ACCESS_KEY_ID: str = Field(default="placeholder_access_key")
+    STORAGE_SECRET_ACCESS_KEY: str = Field(default="placeholder_secret_key")
+    STORAGE_REGION: str = Field(default="auto")
+    # Expiração padrão das signed URLs em segundos (1 hora)
+    STORAGE_SIGNED_URL_EXPIRES: int = 3600
+    # Tamanho máximo de upload em bytes (20 MB)
+    STORAGE_MAX_FILE_SIZE: int = 20 * 1024 * 1024
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:
         if not v.startswith(("postgresql", "postgres")):
             raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
+        return v
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: object) -> object:
+        """Garante que CORS não expõe wildcard em produção."""
+        import os
+
+        if os.getenv("ENVIRONMENT", "development") == "production":
+            origins = v if isinstance(v, list) else [v]
+            for origin in origins:
+                if str(origin).strip() == "*":
+                    raise ValueError(
+                        "ALLOWED_ORIGINS não pode ser '*' em produção. "
+                        "Configure origens explícitas via variável de ambiente."
+                    )
         return v
 
 

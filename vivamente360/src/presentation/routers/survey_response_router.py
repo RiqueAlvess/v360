@@ -13,7 +13,9 @@ import uuid
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.enums.task_queue_type import TaskQueueType
@@ -29,6 +31,8 @@ from src.shared.security import encrypt_data
 
 router: APIRouter = APIRouter(prefix="/survey-responses", tags=["survey-responses"])
 
+_limiter: Limiter = Limiter(key_func=get_remote_address)
+
 
 @router.post(
     "/campaigns/{campaign_id}",
@@ -42,7 +46,9 @@ router: APIRouter = APIRouter(prefix="/survey-responses", tags=["survey-response
         "'analyze_sentiment'. O cálculo ocorre de forma assíncrona."
     ),
 )
+@_limiter.limit("5/minute")
 async def submit_survey_response(
+    request: Request,
     campaign_id: UUID,
     body: SurveyResponseSubmitRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
