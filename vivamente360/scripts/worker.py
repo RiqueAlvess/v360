@@ -9,12 +9,13 @@ via SELECT FOR UPDATE SKIP LOCKED. Múltiplos workers podem ser iniciados
 em paralelo sem risco de processar a mesma tarefa.
 
 Handlers registrados:
-    - send_email          → SendEmailHandler
-    - compute_scores      → RebuildAnalyticsHandler
-    - analyze_sentiment   → AnalyzeSentimentHandler
-    - run_ai_analysis     → RunAiAnalysisHandler
-    - notify_plan_completed → NotifyPlanCompletedHandler
-    - cleanup_expired_tokens → (handler inline: TokenRepository.cleanup_expired)
+    - send_email                      → SendEmailHandler
+    - compute_scores                  → RebuildAnalyticsHandler
+    - analyze_sentiment               → AnalyzeSentimentHandler
+    - run_ai_analysis                 → RunAiAnalysisHandler
+    - notify_plan_completed           → NotifyPlanCompletedHandler
+    - cleanup_expired_tokens          → (handler inline: TokenRepository.cleanup_expired)
+    - refresh_campaign_comparison     → RefreshCampaignComparisonHandler (Módulo 09)
 
 Para rodar múltiplos workers em produção:
     # Opção 1: processos separados
@@ -46,6 +47,9 @@ from src.infrastructure.queue.handlers.notify_plan_completed_handler import (  #
 )
 from src.infrastructure.queue.handlers.rebuild_analytics_handler import (  # noqa: E402
     RebuildAnalyticsHandler,
+)
+from src.infrastructure.queue.handlers.refresh_campaign_comparison_handler import (  # noqa: E402
+    RefreshCampaignComparisonHandler,
 )
 from src.infrastructure.queue.handlers.run_ai_analysis_handler import (  # noqa: E402
     RunAiAnalysisHandler,
@@ -106,6 +110,11 @@ async def main() -> None:
             NotifyPlanCompletedHandler,
         )
         worker.register(TaskQueueType.RUN_AI_ANALYSIS.value, RunAiAnalysisHandler)
+        # Módulo 09: refresh da view materializada campaign_comparison
+        worker.register(
+            TaskQueueType.REFRESH_CAMPAIGN_COMPARISON.value,
+            RefreshCampaignComparisonHandler,
+        )
 
         logger.info(
             "Handlers registrados: %s",
@@ -116,6 +125,7 @@ async def main() -> None:
                 TaskQueueType.CLEANUP_EXPIRED_TOKENS.value,
                 TaskQueueType.NOTIFY_PLAN_COMPLETED.value,
                 TaskQueueType.RUN_AI_ANALYSIS.value,
+                TaskQueueType.REFRESH_CAMPAIGN_COMPARISON.value,
             ],
         )
 

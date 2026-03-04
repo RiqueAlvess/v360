@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from src.infrastructure.database.models.campaign import Campaign
     from src.infrastructure.database.models.dim_estrutura import DimEstrutura
     from src.infrastructure.database.models.dim_tempo import DimTempo
+    from src.infrastructure.database.models.organizational_unit import OrganizationalUnit
+    from src.infrastructure.database.models.sector import Sector
+    from src.infrastructure.database.models.job_position import JobPosition
 
 
 class FactScoreDimensao(Base):
@@ -30,6 +33,10 @@ class FactScoreDimensao(Base):
     sentimento_score_medio: média dos scores de sentimento das respostas que
     forneceram texto livre com consentimento. NULL quando nenhuma resposta da
     campanha contém análise de sentimento concluída.
+
+    unidade_id / setor_id / cargo_id: desnormalização intencional de dim_estrutura
+    para filtragem eficiente sem JOIN no hot path do dashboard (Módulo 09).
+    NULL para registros de nível empresa (sem hierarquia organizacional).
     """
 
     __tablename__ = "fact_score_dimensao"
@@ -75,6 +82,22 @@ class FactScoreDimensao(Base):
         server_default=sa.func.now(),
         nullable=False,
     )
+    # Módulo 09: colunas desnormalizadas de dim_estrutura para filtros eficientes
+    unidade_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        sa.ForeignKey("organizational_units.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    setor_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        sa.ForeignKey("sectors.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    cargo_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        sa.ForeignKey("job_positions.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     __table_args__ = (
         sa.UniqueConstraint(
@@ -90,3 +113,12 @@ class FactScoreDimensao(Base):
     campaign: Mapped["Campaign"] = relationship("Campaign")
     dim_tempo: Mapped["DimTempo"] = relationship("DimTempo")
     dim_estrutura: Mapped["DimEstrutura"] = relationship("DimEstrutura")
+    unidade: Mapped[Optional["OrganizationalUnit"]] = relationship(
+        "OrganizationalUnit", foreign_keys=[unidade_id]
+    )
+    setor: Mapped[Optional["Sector"]] = relationship(
+        "Sector", foreign_keys=[setor_id]
+    )
+    cargo: Mapped[Optional["JobPosition"]] = relationship(
+        "JobPosition", foreign_keys=[cargo_id]
+    )

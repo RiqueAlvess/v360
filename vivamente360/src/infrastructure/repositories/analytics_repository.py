@@ -60,6 +60,9 @@ class AnalyticsRepository(ABC):
         nivel_risco: NivelRisco,
         total_respostas: int,
         sentimento_score_medio: Optional[Decimal] = None,
+        unidade_id: Optional[UUID] = None,
+        setor_id: Optional[UUID] = None,
+        cargo_id: Optional[UUID] = None,
     ) -> None:
         """Insere ou atualiza um registro em fact_score_dimensao (idempotente)."""
         ...
@@ -201,6 +204,9 @@ class SQLAnalyticsRepository(AnalyticsRepository):
         nivel_risco: NivelRisco,
         total_respostas: int,
         sentimento_score_medio: Optional[Decimal] = None,
+        unidade_id: Optional[UUID] = None,
+        setor_id: Optional[UUID] = None,
+        cargo_id: Optional[UUID] = None,
     ) -> None:
         """Insere ou atualiza fact_score_dimensao usando INSERT ... ON CONFLICT DO UPDATE.
 
@@ -217,6 +223,9 @@ class SQLAnalyticsRepository(AnalyticsRepository):
             total_respostas: Número de respostas que compõem o cálculo.
             sentimento_score_medio: Média dos scores de sentimento das respostas
                 com texto livre analisado. NULL quando nenhuma resposta tem sentimento.
+            unidade_id: UUID da unidade organizacional (desnormalizado de dim_estrutura).
+            setor_id: UUID do setor (desnormalizado de dim_estrutura).
+            cargo_id: UUID do cargo (desnormalizado de dim_estrutura).
         """
         stmt = pg_insert(FactScoreDimensao).values(
             id=uuid.uuid4(),
@@ -229,8 +238,11 @@ class SQLAnalyticsRepository(AnalyticsRepository):
             total_respostas=total_respostas,
             sentimento_score_medio=sentimento_score_medio,
             computed_at=sa.func.now(),
+            unidade_id=unidade_id,
+            setor_id=setor_id,
+            cargo_id=cargo_id,
         )
-        # ON CONFLICT: atualiza score, risco, total, sentimento e computed_at
+        # ON CONFLICT: atualiza score, risco, total, sentimento, campos de filtro e computed_at
         stmt = stmt.on_conflict_do_update(
             constraint="uq_fact_score_dimensao",
             set_={
@@ -238,6 +250,9 @@ class SQLAnalyticsRepository(AnalyticsRepository):
                 "nivel_risco": stmt.excluded.nivel_risco,
                 "total_respostas": stmt.excluded.total_respostas,
                 "sentimento_score_medio": stmt.excluded.sentimento_score_medio,
+                "unidade_id": stmt.excluded.unidade_id,
+                "setor_id": stmt.excluded.setor_id,
+                "cargo_id": stmt.excluded.cargo_id,
                 "computed_at": sa.func.now(),
             },
         )

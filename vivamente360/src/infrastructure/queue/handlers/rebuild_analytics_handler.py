@@ -18,6 +18,7 @@ Pipeline:
     5. Obter ou criar dim_tempo para a data de hoje.
     6. Obter ou criar dim_estrutura para a empresa (nível companhia).
     7. Upsert em fact_score_dimensao (idempotente via ON CONFLICT DO UPDATE).
+    8. Enfileirar tarefa refresh_campaign_comparison (Módulo 09).
 """
 import logging
 from datetime import date, timezone
@@ -26,13 +27,16 @@ from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
+import sqlalchemy as sa
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.application.services.score_service import ScoreService
 from src.domain.enums.dimensao_hse import DimensaoHSE
+from src.domain.enums.task_queue_type import TaskQueueType
 from src.infrastructure.database.models.campaign import Campaign
 from src.infrastructure.database.models.survey_response import SurveyResponse
+from src.infrastructure.database.models.task_queue import TaskQueue
 from src.infrastructure.queue.base_handler import BaseTaskHandler
 from src.infrastructure.repositories.analytics_repository import SQLAnalyticsRepository
 
@@ -162,6 +166,7 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
 
         # ---------------------------------------------------------------
         # 7. Upsert em fact_score_dimensao para cada dimensão HSE-IT
+        #    Inclui campos desnormalizados de dim_estrutura (Módulo 09)
         # ---------------------------------------------------------------
         dimensoes_computadas = 0
         for dimensao in DimensaoHSE:
@@ -187,6 +192,9 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
                 nivel_risco=nivel_risco,
                 total_respostas=total_dim,
                 sentimento_score_medio=sentimento_score_medio,
+                unidade_id=dim_estrutura.unidade_id,
+                setor_id=dim_estrutura.setor_id,
+                cargo_id=dim_estrutura.cargo_id,
             )
             dimensoes_computadas += 1
             logger.debug(
@@ -204,6 +212,22 @@ class RebuildAnalyticsHandler(BaseTaskHandler):
             dimensoes_computadas,
             total_respostas_campanha,
             sentimento_score_medio,
+        )
+
+        # ---------------------------------------------------------------
+        # 8. Enfileirar refresh da view materializada campaign_comparison
+        #    (Módulo 09 — sem commit próprio: o worker commit após execute())
+        # ---------------------------------------------------------------
+        refresh_task = TaskQueue(
+            tipo=TaskQueueType.REFRESH_CAMPAIGN_COMPARISON,
+            payload={"campaign_id": str(campaign_id)},
+            agendado_para=dt.now(tz=timezone.utc),
+        )
+        self._db.add(refresh_task)
+        await self._db.flush()
+        logger.debug(
+            "Tarefa refresh_campaign_comparison enfileirada: campaign_id=%s",
+            campaign_id,
         )
 
     def _validate_payload(self, payload: dict[str, Any]) -> None:
