@@ -91,6 +91,74 @@ class AnalyticsRepository(ABC):
         """Retorna matriz setor×dimensão com scores paginada."""
         ...
 
+    @abstractmethod
+    async def get_score_by_dimension(
+        self,
+        campaign_id: UUID,
+        dimensao: DimensaoHSE,
+    ) -> Optional[dict[str, Any]]:
+        """Retorna score e nível de risco de uma dimensão HSE-IT específica.
+
+        Lê exclusivamente de fact_score_dimensao — zero cálculos (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            dimensao: Dimensão HSE-IT a consultar.
+
+        Returns:
+            Dicionário com dimensao, score_medio, nivel_risco e total_respostas,
+            ou None se não houver dados computados para a dimensão.
+        """
+        ...
+
+    @abstractmethod
+    async def get_historical_scores(
+        self,
+        campaign_id: UUID,
+        data_inicio: date,
+        data_fim: date,
+    ) -> list[dict[str, Any]]:
+        """Retorna séries históricas de scores por dimensão em um período.
+
+        Agrupa os registros fact por data (dim_tempo.data) e dimensão,
+        permitindo visualizar a evolução temporal dos scores da campanha.
+
+        Lê exclusivamente de fact_score_dimensao + dim_tempo (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            data_inicio: Data inicial do período (inclusiva).
+            data_fim: Data final do período (inclusiva).
+
+        Returns:
+            Lista de dicionários com data, dimensao, score_medio e total_respostas,
+            ordenados por data e dimensão.
+        """
+        ...
+
+    @abstractmethod
+    async def get_top_risk_sectors(
+        self,
+        campaign_id: UUID,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Retorna os setores com maior nível de risco psicossocial.
+
+        Agrega scores por dim_estrutura e dimensão, ranqueando pelo score
+        médio mais baixo (menor score = maior risco).
+
+        Lê exclusivamente de fact_score_dimensao + dim_estrutura (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            limit: Número máximo de setores a retornar (padrão 10).
+
+        Returns:
+            Lista de dicionários com setor_nome, score_medio, nivel_risco e
+            total_respostas, ordenados por score_medio ascendente (maior risco primeiro).
+        """
+        ...
+
 
 class SQLAnalyticsRepository(AnalyticsRepository):
     """Implementação SQLAlchemy do repositório de analytics."""
@@ -449,3 +517,156 @@ class SQLAnalyticsRepository(AnalyticsRepository):
             )
 
         return heatmap_cells, total
+
+    async def get_score_by_dimension(
+        self,
+        campaign_id: UUID,
+        dimensao: DimensaoHSE,
+    ) -> Optional[dict[str, Any]]:
+        """Retorna score e nível de risco de uma dimensão HSE-IT específica.
+
+        Agrega múltiplos registros fact (de diferentes estruturas e datas)
+        em um único score médio para a dimensão solicitada. Lê exclusivamente
+        de fact_score_dimensao — zero cálculos em runtime (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            dimensao: Dimensão HSE-IT a consultar.
+
+        Returns:
+            Dicionário com dimensao, score_medio, nivel_risco e total_respostas,
+            ou None se não houver dados computados para a dimensão.
+        """
+        stmt = (
+            select(
+                FactScoreDimensao.dimensao,
+                func.avg(FactScoreDimensao.score_medio).label("score_medio"),
+                func.sum(FactScoreDimensao.total_respostas).label("total_respostas"),
+            )
+            .where(FactScoreDimensao.campaign_id == campaign_id)
+            .where(FactScoreDimensao.dimensao == dimensao)
+            .group_by(FactScoreDimensao.dimensao)
+        )
+        result = await self._session.execute(stmt)
+        row = result.one_or_none()
+
+        if row is None or row.score_medio is None:
+            return None
+
+        from src.application.services.score_service import ScoreService
+
+        score = Decimal(str(row.score_medio)).quantize(Decimal("0.01"))
+        nivel = ScoreService().calcular_nivel_risco(score)
+
+        return {
+            "dimensao": dimensao.value,
+            "score_medio": float(score),
+            "nivel_risco": nivel.value,
+            "total_respostas": int(row.total_respostas or 0),
+        }
+
+    async def get_historical_scores(
+        self,
+        campaign_id: UUID,
+        data_inicio: date,
+        data_fim: date,
+    ) -> list[dict[str, Any]]:
+        """Retorna séries históricas de scores por dimensão em um período.
+
+        Agrupa os registros fact por data (dim_tempo.data) e dimensão,
+        permitindo visualizar a evolução temporal dos scores. Lê exclusivamente
+        de fact_score_dimensao + dim_tempo (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            data_inicio: Data inicial do período (inclusiva).
+            data_fim: Data final do período (inclusiva).
+
+        Returns:
+            Lista de dicionários com data, dimensao, score_medio e total_respostas,
+            ordenados por data ascendente e dimensão.
+        """
+        stmt = (
+            select(
+                DimTempo.data,
+                FactScoreDimensao.dimensao,
+                func.avg(FactScoreDimensao.score_medio).label("score_medio"),
+                func.sum(FactScoreDimensao.total_respostas).label("total_respostas"),
+            )
+            .join(DimTempo, FactScoreDimensao.dim_tempo_id == DimTempo.id)
+            .where(FactScoreDimensao.campaign_id == campaign_id)
+            .where(DimTempo.data >= data_inicio)
+            .where(DimTempo.data <= data_fim)
+            .group_by(DimTempo.data, FactScoreDimensao.dimensao)
+            .order_by(DimTempo.data, FactScoreDimensao.dimensao)
+        )
+        result = await self._session.execute(stmt)
+        rows = result.all()
+
+        historico: list[dict[str, Any]] = []
+        for row in rows:
+            score = Decimal(str(row.score_medio)).quantize(Decimal("0.01"))
+            historico.append(
+                {
+                    "data": row.data.isoformat(),
+                    "dimensao": row.dimensao.value,
+                    "score_medio": float(score),
+                    "total_respostas": int(row.total_respostas or 0),
+                }
+            )
+
+        return historico
+
+    async def get_top_risk_sectors(
+        self,
+        campaign_id: UUID,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Retorna os setores com maior nível de risco psicossocial.
+
+        Agrega scores por dim_estrutura (setor_nome), ranqueando pelo score
+        médio mais baixo (menor score = maior risco). Lê exclusivamente de
+        fact_score_dimensao + dim_estrutura (Regra R3).
+
+        Args:
+            campaign_id: UUID da campanha.
+            limit: Número máximo de setores a retornar (padrão 10).
+
+        Returns:
+            Lista de dicionários com setor_nome, score_medio, nivel_risco e
+            total_respostas, ordenados por score_medio ascendente (maior risco primeiro).
+        """
+        stmt = (
+            select(
+                DimEstrutura.setor_nome,
+                DimEstrutura.unidade_nome,
+                func.avg(FactScoreDimensao.score_medio).label("score_medio"),
+                func.sum(FactScoreDimensao.total_respostas).label("total_respostas"),
+            )
+            .join(DimEstrutura, FactScoreDimensao.dim_estrutura_id == DimEstrutura.id)
+            .where(FactScoreDimensao.campaign_id == campaign_id)
+            .group_by(DimEstrutura.setor_nome, DimEstrutura.unidade_nome)
+            .order_by(sa.asc("score_medio"))
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        rows = result.all()
+
+        from src.application.services.score_service import ScoreService
+
+        score_service = ScoreService()
+        setores: list[dict[str, Any]] = []
+        for row in rows:
+            score = Decimal(str(row.score_medio)).quantize(Decimal("0.01"))
+            nivel = score_service.calcular_nivel_risco(score)
+            setores.append(
+                {
+                    "setor_nome": row.setor_nome,
+                    "unidade_nome": row.unidade_nome,
+                    "score_medio": float(score),
+                    "nivel_risco": nivel.value,
+                    "total_respostas": int(row.total_respostas or 0),
+                }
+            )
+
+        return setores
