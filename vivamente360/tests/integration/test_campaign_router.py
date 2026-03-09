@@ -130,11 +130,11 @@ class TestCreateCampaign:
                 new=AsyncMock(return_value=fake_campaign),
             ),
             patch(
-                "src.infrastructure.repositories.checklist_repository.SQLChecklistRepository.bulk_create_from_templates",
+                "src.infrastructure.repositories.checklist_repository.SQLChecklistRepository.create_items_from_templates",
                 new=AsyncMock(return_value=[]),
             ),
             patch(
-                "src.infrastructure.repositories.checklist_repository.SQLChecklistRepository.get_active_templates",
+                "src.infrastructure.repositories.checklist_repository.SQLChecklistRepository.get_all_templates",
                 new=AsyncMock(return_value=[]),
             ),
         ):

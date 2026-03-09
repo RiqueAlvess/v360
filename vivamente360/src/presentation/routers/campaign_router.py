@@ -30,7 +30,7 @@ from src.presentation.schemas.checklist_schemas import (
     ChecklistPaginationMeta,
 )
 
-router: APIRouter = APIRouter(prefix="/campaigns", tags=["campaigns"])
+router: APIRouter = APIRouter(prefix="/campaigns", tags=["campaigns"], redirect_slashes=False)
 
 # Limites de paginação — Regra R4
 _PAGE_SIZE_MAX: int = 100
@@ -56,7 +56,7 @@ def _build_service(db: AsyncSession) -> CampaignService:
 
 
 @router.post(
-    "/",
+    "",
     response_model=CampaignResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Cria uma nova campanha de avaliação psicossocial",
@@ -109,7 +109,7 @@ async def create_campaign(
 
 
 @router.get(
-    "/",
+    "",
     response_model=CampaignListResponse,
     status_code=status.HTTP_200_OK,
     summary="Lista campanhas da empresa autenticada",

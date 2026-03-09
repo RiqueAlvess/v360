@@ -13,6 +13,7 @@ REGRAS DE SEGURANÇA:
 """
 import asyncio
 import logging
+import os
 import uuid
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -435,10 +436,18 @@ def build_storage_key(company_id: str, contexto: str, file_id: str, filename: st
     Returns:
         Chave padronizada para uso como storage_key no FileAsset.
     """
-    # Sanitizar nome do arquivo: remover caracteres perigosos
+    # Extrair apenas o basename para prevenir path traversal (ex: ../../etc/passwd)
+    safe_filename = os.path.basename(filename)
+    # Sanitizar: permitir apenas caracteres alfanuméricos, ponto e hífen/underscore
     safe_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-")
-    sanitized = "".join(c if c in safe_chars else "_" for c in filename)
-    sanitized = sanitized[:200]  # Limite de comprimento
+    safe_filename = "".join(c if c in safe_chars else "_" for c in safe_filename)
+    # Remover pontos iniciais para evitar arquivos ocultos/relativos
+    safe_filename = safe_filename.lstrip(".")
 
+    # Embutir file_id no último componente para evitar subdirectório extra.
+    # Formato: {company_clean}/{contexto}/{file_id_clean}_{safe_filename}
+    # O componente final é truncado a 200 chars para limitar o comprimento total.
     company_clean = str(company_id).replace("-", "")
-    return f"{company_clean}/{contexto}/{file_id}/{sanitized}"
+    file_id_clean = str(file_id).replace("-", "")
+    last_component = f"{file_id_clean}_{safe_filename}"[:200]
+    return f"{company_clean}/{contexto}/{last_component}"
