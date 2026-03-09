@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* Cores Primárias */
+  --color-primary: #1a56a0;
+  --color-primary-light: #d6e4f7;
+  --color-primary-dark: #0f3460;
+
+  /* Cores de Status NR-1 */
+  --color-risk-critical: #c0392b;
+  --color-risk-high: #e67e22;
+  --color-risk-medium: #f1c40f;
+  --color-risk-low: #27ae60;
+  --color-risk-minimal: #0e9e6e;
+
+  /* Feedback */
+  --color-success: #0e9e6e;
+  --color-warning: #d68910;
+  --color-error: #c0392b;
+  --color-info: #2980b9;
+
+  /* Neutros */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-primary: #1a202c;
+  --color-text-secondary: #718096;
+  --color-text-disabled: #a0aec0;
+
+  /* Sidebar */
+  --color-sidebar-bg: #0f3460;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-active: #1a56a0;
+
+  /* shadcn/ui variables */
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 214 75% 36%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 214 75% 36%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+  }
+
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-xl font-semibold;
+  }
+}
+
+@layer utilities {
+  /* Sidebar colors */
+  .sidebar-bg {
+    background-color: var(--color-sidebar-bg);
+  }
+
+  .sidebar-text {
+    color: var(--color-sidebar-text);
+  }
+
+  /* Risk level utilities */
+  .risk-critical {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  .risk-high {
+    @apply bg-amber-50 text-amber-700 border border-amber-200;
+  }
+
+  .risk-medium {
+    @apply bg-yellow-50 text-yellow-700 border border-yellow-200;
+  }
+
+  .risk-low {
+    @apply bg-green-50 text-green-700 border border-green-200;
+  }
+
+  .risk-minimal {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-disabled);
+}
