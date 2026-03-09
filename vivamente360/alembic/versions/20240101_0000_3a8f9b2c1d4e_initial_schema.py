@@ -54,12 +54,12 @@ def upgrade() -> None:
     # -----------------------------------------------------------------------
     # 1. Criar tipos ENUM nativos do PostgreSQL
     # -----------------------------------------------------------------------
-    op.execute("CREATE TYPE IF NOT EXISTS company_plan AS ENUM ('free', 'basic', 'professional', 'enterprise')")
-    op.execute("CREATE TYPE IF NOT EXISTS user_role AS ENUM ('admin', 'manager', 'respondent')")
-    op.execute("CREATE TYPE IF NOT EXISTS campaign_status AS ENUM ('draft', 'active', 'paused', 'completed', 'cancelled')")
-    op.execute("CREATE TYPE IF NOT EXISTS task_queue_type AS ENUM ('compute_scores', 'send_email', 'send_invitations', 'generate_report')")
-    op.execute("CREATE TYPE IF NOT EXISTS task_queue_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled')")
-    op.execute("CREATE TYPE IF NOT EXISTS email_log_status AS ENUM ('pending', 'sent', 'failed', 'bounced')")
+    COMPANY_PLAN_ENUM.create(op.get_bind(), checkfirst=True)
+    USER_ROLE_ENUM.create(op.get_bind(), checkfirst=True)
+    CAMPAIGN_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
+    TASK_QUEUE_TYPE_ENUM.create(op.get_bind(), checkfirst=True)
+    TASK_QUEUE_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
+    EMAIL_LOG_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
 
     # -----------------------------------------------------------------------
     # 2. companies — raiz do isolamento multi-tenant
