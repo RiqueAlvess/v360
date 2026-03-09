@@ -68,6 +68,7 @@ class EmailService:
         tipo: str,
         destinatario_email: str,
         contexto: dict[str, Any],
+        company_id: UUID | None = None,
     ) -> UUID:
         """Valida, registra e enfileira um email para envio assíncrono.
 
