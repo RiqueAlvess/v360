@@ -162,4 +162,8 @@ class TaskWorker:
                     await asyncio.sleep(interval_seconds)
             except Exception:
                 logger.exception("Erro inesperado no loop do worker — reiniciando ciclo")
+                try:
+                    await self._db.rollback()
+                except Exception:
+                    logger.warning("Falha ao fazer rollback da sessão — ignorando")
                 await asyncio.sleep(interval_seconds)
