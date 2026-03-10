@@ -4,9 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
@@ -14,8 +13,16 @@ import { ROUTES } from "@/lib/constants";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Se já estiver autenticado ao montar, redireciona imediatamente
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push(ROUTES.DASHBOARD);
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const {
     register,
@@ -31,7 +38,10 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    const result = await login(data.email, data.password);
+    setApiError(null);
+    const callbackUrl = searchParams.get("callbackUrl") || ROUTES.DASHBOARD;
+    // O redirect acontece dentro de login() após /me retornar 200
+    const result = await login(data.email, data.password, callbackUrl);
     if (!result.success) {
       const message =
         result.message === "Incorrect email or password" ||
@@ -39,15 +49,11 @@ export function LoginForm() {
         result.message?.toLowerCase().includes("password")
           ? "E-mail ou senha incorretos"
           : result.message || "Erro ao fazer login";
-      toast.error(message);
-      return;
+      setApiError(message);
     }
-    const callbackUrl = searchParams.get("callbackUrl") || ROUTES.DASHBOARD;
-    router.push(callbackUrl);
-    router.refresh();
   };
 
-  const isProcessing = isSubmitting;
+  const isProcessing = isSubmitting || isLoading;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
@@ -127,13 +133,27 @@ export function LoginForm() {
         </Link>
       </div>
 
+      {/* Erro da API */}
+      {apiError && (
+        <p className="text-sm text-red-600 text-center" role="alert">
+          {apiError}
+        </p>
+      )}
+
       {/* Submit */}
       <button
         type="submit"
         disabled={isProcessing}
-        className="w-full py-2.5 px-4 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full py-2.5 px-4 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {isProcessing ? "Entrando..." : "Entrar"}
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+            Entrando...
+          </>
+        ) : (
+          "Entrar"
+        )}
       </button>
     </form>
   );
