@@ -233,6 +233,7 @@ export const ROUTES = {
   ACTION_PLANS: "/action-plans",
   AI_ANALYSIS: "/ai-analysis",
   WHISTLEBLOWER: "/whistleblower",
+  DENUNCIA: "/denuncia",
   STORAGE: "/storage",
   SETTINGS: "/settings",
   SUPER_ADMIN: "/super-admin",
