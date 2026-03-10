@@ -137,10 +137,6 @@ api.interceptors.response.use(
         tokenStore.clear();
         refreshTokenStore.clear();
         onRefreshFailed();
-        // Redirect to login
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
