@@ -62,13 +62,9 @@ async def get_current_user(
     # SET LOCAL garante que a configuração vale apenas para a transação atual.
     # app.company_id: isolamento multi-tenant (campanhas, planos, etc.)
     # app.user_id: isolamento por usuário (notificações in-app — Módulo 08)
-    await db.execute(
-        text("SET LOCAL app.company_id = :company_id"),
-        {"company_id": str(company_id)},
-    )
-    await db.execute(
-        text("SET LOCAL app.user_id = :user_id"),
-        {"user_id": str(user_id)},
-    )
+    # PostgreSQL SET LOCAL não suporta bind parameters ($1), então os UUIDs
+    # (já validados pelo construtor UUID()) são embutidos diretamente na SQL.
+    await db.execute(text(f"SET LOCAL app.company_id = '{company_id}'"))
+    await db.execute(text(f"SET LOCAL app.user_id = '{user_id}'"))
 
     return CurrentUser(user_id=user_id, company_id=company_id, role=role)
