@@ -22,36 +22,39 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 # ---------------------------------------------------------------------------
-# Definições de ENUM nativo PostgreSQL (usadas apenas no downgrade/drop)
-# create_type=False evita que o SQLAlchemy tente criar o tipo via evento
-# before_create ao referenciar este objeto por nome em qualquer contexto.
+# Definições de ENUM nativo PostgreSQL — usando postgresql.ENUM diretamente.
+# IMPORTANTE: sa.Enum registra _on_table_create no before_create da tabela,
+# e ao adaptar para o dialeto PostgreSQL via dialect_impl(), o create_type
+# pode não ser propagado, causando CREATE TYPE duplicado (DuplicateObjectError).
+# postgresql.ENUM com create_type=False NÃO registra eventos e é seguro.
+# Estes objetos são usados apenas no downgrade() para DROP TYPE.
 # ---------------------------------------------------------------------------
-COMPANY_PLAN_ENUM = sa.Enum(
+COMPANY_PLAN_ENUM = postgresql.ENUM(
     "free", "basic", "professional", "enterprise",
     name="company_plan",
     create_type=False,
 )
-USER_ROLE_ENUM = sa.Enum(
+USER_ROLE_ENUM = postgresql.ENUM(
     "admin", "manager", "respondent",
     name="user_role",
     create_type=False,
 )
-CAMPAIGN_STATUS_ENUM = sa.Enum(
+CAMPAIGN_STATUS_ENUM = postgresql.ENUM(
     "draft", "active", "paused", "completed", "cancelled",
     name="campaign_status",
     create_type=False,
 )
-TASK_QUEUE_TYPE_ENUM = sa.Enum(
+TASK_QUEUE_TYPE_ENUM = postgresql.ENUM(
     "compute_scores", "send_email", "send_invitations", "generate_report",
     name="task_queue_type",
     create_type=False,
 )
-TASK_QUEUE_STATUS_ENUM = sa.Enum(
+TASK_QUEUE_STATUS_ENUM = postgresql.ENUM(
     "pending", "processing", "completed", "failed", "cancelled",
     name="task_queue_status",
     create_type=False,
 )
-EMAIL_LOG_STATUS_ENUM = sa.Enum(
+EMAIL_LOG_STATUS_ENUM = postgresql.ENUM(
     "pending", "sent", "failed", "bounced",
     name="email_log_status",
     create_type=False,
@@ -127,8 +130,8 @@ def upgrade() -> None:
         sa.Column("cnpj", sa.String(18), nullable=False),
         sa.Column(
             "plano",
-            sa.Enum("free", "basic", "professional", "enterprise",
-                    name="company_plan", create_type=False),
+            postgresql.ENUM("free", "basic", "professional", "enterprise",
+                            name="company_plan", create_type=False),
             nullable=False,
             server_default="free",
         ),
@@ -169,8 +172,8 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(255), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("admin", "manager", "respondent",
-                    name="user_role", create_type=False),
+            postgresql.ENUM("admin", "manager", "respondent",
+                            name="user_role", create_type=False),
             nullable=False,
             server_default="respondent",
         ),
@@ -244,8 +247,8 @@ def upgrade() -> None:
         sa.Column("nome", sa.String(255), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("draft", "active", "paused", "completed", "cancelled",
-                    name="campaign_status", create_type=False),
+            postgresql.ENUM("draft", "active", "paused", "completed", "cancelled",
+                            name="campaign_status", create_type=False),
             nullable=False,
             server_default="draft",
         ),
@@ -347,7 +350,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tipo",
-            sa.Enum(
+            postgresql.ENUM(
                 "compute_scores", "send_email", "send_invitations", "generate_report",
                 name="task_queue_type", create_type=False,
             ),
@@ -356,7 +359,7 @@ def upgrade() -> None:
         sa.Column("payload", postgresql.JSONB, nullable=False),
         sa.Column(
             "status",
-            sa.Enum(
+            postgresql.ENUM(
                 "pending", "processing", "completed", "failed", "cancelled",
                 name="task_queue_status", create_type=False,
             ),
@@ -404,8 +407,8 @@ def upgrade() -> None:
         sa.Column("destinatario_hash", sa.String(64), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("pending", "sent", "failed", "bounced",
-                    name="email_log_status", create_type=False),
+            postgresql.ENUM("pending", "sent", "failed", "bounced",
+                            name="email_log_status", create_type=False),
             nullable=False,
         ),
         sa.Column("provider_id", sa.String(255), nullable=True),
