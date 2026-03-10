@@ -15,7 +15,7 @@ import { ROUTES } from "@/lib/constants";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -47,7 +47,7 @@ export function LoginForm() {
     }
   };
 
-  const isProcessing = isSubmitting || isLoading;
+  const isProcessing = isSubmitting;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
