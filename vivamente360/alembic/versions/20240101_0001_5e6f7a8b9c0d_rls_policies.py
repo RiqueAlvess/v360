@@ -10,7 +10,6 @@ Revises: 3a8f9b2c1d4e
 Create Date: 2024-01-01 00:01:00.000000
 
 """
-import os
 from pathlib import Path
 from typing import Sequence, Union
 
@@ -27,9 +26,44 @@ depends_on: Union[str, Sequence[str], None] = None
 _RLS_SQL_PATH = Path(__file__).parent.parent / "rls_policies.sql"
 
 
+def _split_sql_statements(sql_content: str) -> list[str]:
+    """Split SQL content into individual statements for asyncpg compatibility.
+
+    asyncpg does not support multiple statements in a single prepared statement.
+    This splits on semicolons while respecting DO $$ ... $$ blocks.
+    """
+    statements: list[str] = []
+    current = ""
+
+    for line in sql_content.splitlines():
+        stripped = line.strip()
+        # Skip pure comment lines and empty lines
+        if stripped.startswith("--") or not stripped:
+            continue
+        current += line + "\n"
+
+        # If we're inside a DO $$ block, wait for the closing $$;
+        if "DO $$" in current or "DO  $$" in current:
+            if current.rstrip().endswith("$$;"):
+                statements.append(current.strip())
+                current = ""
+            continue
+
+        # Normal statement ending with semicolon
+        if stripped.endswith(";"):
+            statements.append(current.strip())
+            current = ""
+
+    if current.strip():
+        statements.append(current.strip())
+
+    return [s for s in statements if s]
+
+
 def upgrade() -> None:
     sql_content = _RLS_SQL_PATH.read_text(encoding="utf-8")
-    op.execute(text(sql_content))
+    for statement in _split_sql_statements(sql_content):
+        op.execute(text(statement))
 
 
 def downgrade() -> None:
