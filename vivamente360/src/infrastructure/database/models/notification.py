@@ -44,7 +44,7 @@ class Notification(Base):
         index=True,
     )
     tipo: Mapped[NotificationTipo] = mapped_column(
-        sa.Enum(NotificationTipo, name="notification_tipo", create_type=False),
+        sa.Enum(NotificationTipo, name="notification_tipo", create_type=False, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
     )
     titulo: Mapped[str] = mapped_column(sa.Text, nullable=False)
