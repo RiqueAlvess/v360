@@ -12,9 +12,18 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { tokenStore, refreshTokenStore } from "@/lib/api";
 import { V360_ACCESS_TOKEN_KEY, V360_REFRESH_TOKEN_KEY, ROUTES } from "@/lib/constants";
-import type { UserProfile } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+// Internal user type — maps backend tenant_id → company_id
+export type AuthUser = {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  company_id: string; // mapped from tenant_id or company_id in the API response
+  is_active: boolean;
+};
 
 export interface LoginResult {
   success: true;
@@ -28,12 +37,23 @@ export interface LoginError {
 export type LoginOutcome = LoginResult | LoginError;
 
 export interface AuthContextValue {
-  user: UserProfile | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  setAuthUser: (userData: any) => void;
   login: (email: string, password: string, redirectTo?: string) => Promise<LoginOutcome>;
   logout: () => Promise<void>;
 }
+
+// CRITICAL: backend returns 'tenant_id'; internally we use 'company_id'
+const mapApiUser = (data: any): AuthUser => ({
+  id: data.id,
+  email: data.email,
+  full_name: data.full_name,
+  role: data.role,
+  company_id: data.company_id ?? data.tenant_id,
+  is_active: data.is_active,
+});
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -43,7 +63,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,9 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initialCheck = async () => {
       try {
-        const { data: profile } = await api.get<UserProfile>("/auth/me");
+        const { data: profile } = await api.get<any>("/auth/me");
         if (!cancelled) {
-          setUser(profile);
+          setUser(mapApiUser(profile));
           setIsAuthenticated(true);
           setIsLoading(false);
         }
@@ -92,9 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             tokenStore.set(refreshed.access_token);
             refreshTokenStore.set(refreshed.refresh_token);
 
-            const { data: profile } = await api.get<UserProfile>("/auth/me");
+            const { data: profile } = await api.get<any>("/auth/me");
             if (!cancelled) {
-              setUser(profile);
+              setUser(mapApiUser(profile));
               setIsAuthenticated(true);
               setIsLoading(false);
             }
@@ -144,8 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshTokenStore.set(tokens.refresh_token);
 
         // /me confirma que a sessão está válida antes de redirecionar
-        const { data: profile } = await api.get<UserProfile>("/auth/me");
-        setUser(profile);
+        const { data: profile } = await api.get<any>("/auth/me");
+        setUser(mapApiUser(profile));
         setIsAuthenticated(true);
 
         // Redirect happens here, after /me returns 200.
@@ -169,6 +189,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [router]
   );
 
+  // ── setAuthUser ────────────────────────────────────────────────────────────
+  // Allows LoginForm (or any caller) to inject the user directly after login
+  // without an extra /me round-trip.
+  const setAuthUser = useCallback((userData: any) => {
+    setUser(mapApiUser(userData));
+    setIsAuthenticated(true);
+  }, []);
+
   // ── logout ─────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     const refreshToken = localStorage.getItem(V360_REFRESH_TOKEN_KEY);
@@ -189,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, setAuthUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
