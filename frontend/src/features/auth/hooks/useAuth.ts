@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { tokenStore } from "@/lib/api";
+import { tokenStore, refreshTokenStore } from "@/lib/api";
 import { authService } from "../services/authService";
 import type { AuthStore } from "../types/auth.types";
 import type { UserProfile } from "@/types";
@@ -25,6 +25,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   clearAuth: () => {
     tokenStore.clear();
+    refreshTokenStore.clear();
     set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
   },
 
@@ -43,8 +44,9 @@ export function useAuth() {
     setLoading(true);
     try {
       const response = await authService.login({ email, password, remember_me: rememberMe });
-      // Store token first so getProfile request has Authorization header
+      // Store tokens first so getProfile request has Authorization header
       tokenStore.set(response.access_token);
+      refreshTokenStore.set(response.refresh_token);
       const profile = await authService.getProfile();
       setAuth(profile, response.access_token);
       return response;

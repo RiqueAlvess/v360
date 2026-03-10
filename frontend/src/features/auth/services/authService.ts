@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { refreshTokenStore } from "@/lib/api";
 import type { LoginRequest, LoginResponse, RefreshResponse, UserProfile } from "@/types";
 
 export const authService = {
@@ -11,17 +12,21 @@ export const authService = {
   },
 
   /**
-   * Logout the current user
+   * Logout the current user — revokes the refresh token on the backend
    */
   async logout(): Promise<void> {
-    await api.post("/auth/logout");
+    const rt = refreshTokenStore.get();
+    if (rt) {
+      await api.post("/auth/logout", { refresh_token: rt });
+    }
   },
 
   /**
-   * Refresh the access token using the httpOnly refresh token cookie
+   * Refresh the access token by sending the current refresh token in the body
    */
   async refresh(): Promise<RefreshResponse> {
-    const response = await api.post<RefreshResponse>("/auth/refresh");
+    const rt = refreshTokenStore.get();
+    const response = await api.post<RefreshResponse>("/auth/refresh", { refresh_token: rt ?? "" });
     return response.data;
   },
 

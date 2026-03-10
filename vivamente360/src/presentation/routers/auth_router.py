@@ -12,12 +12,17 @@ from src.infrastructure.database.models.task_queue import TaskQueue
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.token_repository import SQLTokenRepository
 from src.infrastructure.repositories.user_repository import SQLUserRepository
+from src.presentation.dependencies.auth import CurrentUser, get_current_user
 from src.presentation.schemas.auth_schemas import (
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
     TokenResponse,
+    UserProfileResponse,
 )
+from src.shared.config import settings
+from src.shared.exceptions import NotFoundError
+from src.shared.security import decrypt_data
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -83,6 +88,32 @@ async def logout(
     service = _build_auth_service(db)
     await service.logout(body.refresh_token)
     await db.commit()
+
+
+@router.get(
+    "/me",
+    response_model=UserProfileResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Perfil do usuário autenticado",
+    description="Retorna os dados do usuário extraídos do JWT e do banco de dados.",
+)
+async def get_me(
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserProfileResponse:
+    user_repo = SQLUserRepository(db)
+    user = await user_repo.get_by_id(current_user.user_id)
+    if not user:
+        raise NotFoundError("User", current_user.user_id)
+    email = decrypt_data(user.email_criptografado.decode("utf-8"), settings.ENCRYPTION_KEY)
+    return UserProfileResponse(
+        id=str(user.id),
+        email=email,
+        full_name=user.full_name,
+        role=user.role.value,
+        tenant_id=str(user.company_id),
+        is_active=user.is_active,
+    )
 
 
 @router.post(

@@ -21,8 +21,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
           setAuth(profile, currentToken);
         }
       })
-      .catch(() => {
-        if (!cancelled) clearAuth();
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          const status = (error as { response?: { status?: number } })?.response?.status;
+          if (!status || status === 401 || status === 403) {
+            clearAuth();
+          } else {
+            // Network error or unexpected failure — don't force logout
+            setLoading(false);
+          }
+        }
       });
     return () => {
       cancelled = true;

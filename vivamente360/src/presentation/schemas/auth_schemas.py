@@ -34,3 +34,16 @@ class TokenResponse(BaseModel):
     access_token: str = Field(description="JWT de acesso (TTL: 15 min)")
     refresh_token: str = Field(description="Token de renovação (TTL: 30 dias)")
     token_type: str = Field(default="bearer", description="Tipo do token OAuth2")
+
+
+class UserProfileResponse(BaseModel):
+    """Perfil do usuário autenticado."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    id: str = Field(description="UUID do usuário")
+    email: str = Field(description="Email do usuário (decifrado)")
+    full_name: str = Field(description="Nome completo ou identificador parcial")
+    role: str = Field(description="Papel do usuário na plataforma")
+    tenant_id: str = Field(description="UUID da empresa")
+    is_active: bool = Field(description="Indica se o usuário está ativo")
