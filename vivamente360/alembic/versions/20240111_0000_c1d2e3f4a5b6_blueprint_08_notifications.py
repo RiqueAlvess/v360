@@ -118,7 +118,7 @@ def upgrade() -> None:
             "metadata",
             JSONB,
             nullable=False,
-            server_default="'{}'",
+            server_default=sa.text("'{}'"),
         ),
         sa.Column(
             "created_at",
