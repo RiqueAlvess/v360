@@ -22,44 +22,96 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 # ---------------------------------------------------------------------------
-# Definições de ENUM nativo PostgreSQL (criados antes das tabelas)
+# Definições de ENUM nativo PostgreSQL (usadas apenas no downgrade/drop)
+# create_type=False evita que o SQLAlchemy tente criar o tipo via evento
+# before_create ao referenciar este objeto por nome em qualquer contexto.
 # ---------------------------------------------------------------------------
 COMPANY_PLAN_ENUM = sa.Enum(
     "free", "basic", "professional", "enterprise",
     name="company_plan",
+    create_type=False,
 )
 USER_ROLE_ENUM = sa.Enum(
     "admin", "manager", "respondent",
     name="user_role",
+    create_type=False,
 )
 CAMPAIGN_STATUS_ENUM = sa.Enum(
     "draft", "active", "paused", "completed", "cancelled",
     name="campaign_status",
+    create_type=False,
 )
 TASK_QUEUE_TYPE_ENUM = sa.Enum(
     "compute_scores", "send_email", "send_invitations", "generate_report",
     name="task_queue_type",
+    create_type=False,
 )
 TASK_QUEUE_STATUS_ENUM = sa.Enum(
     "pending", "processing", "completed", "failed", "cancelled",
     name="task_queue_status",
+    create_type=False,
 )
 EMAIL_LOG_STATUS_ENUM = sa.Enum(
     "pending", "sent", "failed", "bounced",
     name="email_log_status",
+    create_type=False,
 )
 
 
 def upgrade() -> None:
     # -----------------------------------------------------------------------
-    # 1. Criar tipos ENUM nativos do PostgreSQL
+    # 1. Criar tipos ENUM nativos do PostgreSQL (idempotente via DO $$)
+    # Usar DO $$ garante que o CREATE TYPE só ocorre se o tipo não existe,
+    # independente do estado do banco — evita DuplicateObjectError no asyncpg.
     # -----------------------------------------------------------------------
-    COMPANY_PLAN_ENUM.create(op.get_bind(), checkfirst=True)
-    USER_ROLE_ENUM.create(op.get_bind(), checkfirst=True)
-    CAMPAIGN_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
-    TASK_QUEUE_TYPE_ENUM.create(op.get_bind(), checkfirst=True)
-    TASK_QUEUE_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
-    EMAIL_LOG_STATUS_ENUM.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'company_plan') THEN
+                CREATE TYPE company_plan AS ENUM ('free', 'basic', 'professional', 'enterprise');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                CREATE TYPE user_role AS ENUM ('admin', 'manager', 'respondent');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'campaign_status') THEN
+                CREATE TYPE campaign_status AS ENUM ('draft', 'active', 'paused', 'completed', 'cancelled');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_queue_type') THEN
+                CREATE TYPE task_queue_type AS ENUM ('compute_scores', 'send_email', 'send_invitations', 'generate_report');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_queue_status') THEN
+                CREATE TYPE task_queue_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'cancelled');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'email_log_status') THEN
+                CREATE TYPE email_log_status AS ENUM ('pending', 'sent', 'failed', 'bounced');
+            END IF;
+        END$$;
+    """)
 
     # -----------------------------------------------------------------------
     # 2. companies — raiz do isolamento multi-tenant
