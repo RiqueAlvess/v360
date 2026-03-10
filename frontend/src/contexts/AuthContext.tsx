@@ -83,6 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenStore.set(accessToken);
     if (refreshToken) refreshTokenStore.set(refreshToken);
 
+    // Sincroniza o cookie para o middleware Next.js (pode ter expirado entre reloads)
+    document.cookie = `v360_access_token=${accessToken}; path=/; max-age=900; SameSite=Strict`;
+
     const initialCheck = async () => {
       try {
         const { data: profile } = await api.get<any>("/auth/me");
@@ -109,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             localStorage.setItem(V360_ACCESS_TOKEN_KEY, refreshed.access_token);
             localStorage.setItem(V360_REFRESH_TOKEN_KEY, refreshed.refresh_token);
+            document.cookie = `v360_access_token=${refreshed.access_token}; path=/; max-age=900; SameSite=Strict`;
             tokenStore.set(refreshed.access_token);
             refreshTokenStore.set(refreshed.refresh_token);
 
@@ -163,6 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenStore.set(tokens.access_token);
         refreshTokenStore.set(tokens.refresh_token);
 
+        // Salva também em cookie para o middleware Next.js poder ler
+        document.cookie = `v360_access_token=${tokens.access_token}; path=/; max-age=900; SameSite=Strict`;
+        // max-age=900 = 15 minutos (igual ao TTL do access_token no backend)
+        // NÃO coloca o refresh_token em cookie — mantê-lo só no localStorage é mais seguro
+
         // /me confirma que a sessão está válida antes de redirecionar
         const { data: profile } = await api.get<any>("/auth/me");
         setUser(mapApiUser(profile));
@@ -209,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       localStorage.removeItem(V360_ACCESS_TOKEN_KEY);
       localStorage.removeItem(V360_REFRESH_TOKEN_KEY);
+      document.cookie = 'v360_access_token=; path=/; max-age=0'; // limpa o cookie
       tokenStore.clear();
       refreshTokenStore.clear();
       setUser(null);
