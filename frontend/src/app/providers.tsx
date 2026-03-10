@@ -2,8 +2,36 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
+import { useAuthStore } from "@/features/auth/hooks/useAuth";
+import { authService } from "@/features/auth/services/authService";
+
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { setAuth, clearAuth, setLoading } = useAuthStore();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    authService
+      .getProfile()
+      .then((profile) => {
+        if (!cancelled) {
+          const currentToken = useAuthStore.getState().accessToken ?? "";
+          setAuth(profile, currentToken);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) clearAuth();
+      });
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return <>{children}</>;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,7 +58,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <AuthProvider>
+        {children}
+      </AuthProvider>
       <Toaster position="top-right" richColors closeButton />
       {process.env.NODE_ENV === "development" && (
         <ReactQueryDevtools initialIsOpen={false} />

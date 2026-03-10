@@ -43,7 +43,10 @@ export function useAuth() {
     setLoading(true);
     try {
       const response = await authService.login({ email, password, remember_me: rememberMe });
-      setAuth(response.user, response.access_token);
+      // Store token first so getProfile request has Authorization header
+      tokenStore.set(response.access_token);
+      const profile = await authService.getProfile();
+      setAuth(profile, response.access_token);
       return response;
     } finally {
       setLoading(false);

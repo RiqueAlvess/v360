@@ -9,13 +9,26 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 // In-memory access token store (FE-R4: never localStorage)
 let inMemoryAccessToken: string | null = null;
 
+const SESSION_COOKIE = "session";
+
+function syncSessionCookie(token: string | null): void {
+  if (typeof document === "undefined") return;
+  if (token) {
+    document.cookie = `${SESSION_COOKIE}=${token}; path=/; SameSite=Lax`;
+  } else {
+    document.cookie = `${SESSION_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  }
+}
+
 export const tokenStore = {
   get: () => inMemoryAccessToken,
   set: (token: string | null) => {
     inMemoryAccessToken = token;
+    syncSessionCookie(token);
   },
   clear: () => {
     inMemoryAccessToken = null;
+    syncSessionCookie(null);
   },
 };
 
