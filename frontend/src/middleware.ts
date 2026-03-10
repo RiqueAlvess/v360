@@ -23,50 +23,39 @@ async function verifyToken(token: string): Promise<JWTPayload | null> {
   }
 }
 
-function getTokenFromRequest(request: NextRequest): string | null {
-  // Check Authorization header
-  const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.slice(7);
-  }
-  // Check session cookie
-  const sessionCookie = request.cookies.get("session");
-  if (sessionCookie) {
-    return sessionCookie.value;
-  }
-  return null;
-}
+// Rotas que NÃO precisam de autenticação
+const PUBLIC_PATHS = [
+  '/login',
+  '/reset-password',
+  '/survey',     // pesquisas públicas
+  '/denuncia',   // canal de denúncias
+  '/whistleblower',
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+];
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Public routes — always accessible (FE-R7)
-  if (
-    pathname.startsWith("/survey") ||
-    pathname.startsWith("/(public)") ||
-    pathname.startsWith("/api/") ||
-    pathname === "/whistleblower" ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
-  ) {
-    return NextResponse.next();
+  // Ignora rotas públicas
+  const isPublic = PUBLIC_PATHS.some(path => pathname.startsWith(path));
+  if (isPublic) return NextResponse.next();
+
+  // Verifica token no header ou cookie
+  // NOTA: o Next.js middleware NÃO acessa localStorage!
+  // O token deve estar em cookie HttpOnly OU ser verificado client-side
+  let token: string | null = null;
+
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else {
+    token = request.cookies.get("v360_access_token")?.value ?? null;
   }
 
-  // Auth routes — redirect if already authenticated
-  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/reset-password");
-
-  const token = getTokenFromRequest(request);
   const payload = token ? await verifyToken(token) : null;
   const isAuthenticated = payload !== null;
 
-  if (isAuthRoute) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Protected routes — require authentication
   if (!isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
@@ -85,13 +74,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     * - public folder files
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Protege apenas rotas da aplicação — exclui tudo que não é página
+    '/((?!_next/static|_next/image|favicon.ico|api/|.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
