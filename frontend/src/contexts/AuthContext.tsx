@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (refreshToken) refreshTokenStore.set(refreshToken);
 
     // Sincroniza o cookie para o middleware Next.js (pode ter expirado entre reloads)
-    document.cookie = `v360_access_token=${accessToken}; path=/; max-age=900; SameSite=Strict`;
+    document.cookie = `v360_access_token=${accessToken}; path=/; max-age=900; SameSite=Lax`;
 
     const initialCheck = async () => {
       try {
@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             localStorage.setItem(V360_ACCESS_TOKEN_KEY, refreshed.access_token);
             localStorage.setItem(V360_REFRESH_TOKEN_KEY, refreshed.refresh_token);
-            document.cookie = `v360_access_token=${refreshed.access_token}; path=/; max-age=900; SameSite=Strict`;
+            document.cookie = `v360_access_token=${refreshed.access_token}; path=/; max-age=900; SameSite=Lax`;
             tokenStore.set(refreshed.access_token);
             refreshTokenStore.set(refreshed.refresh_token);
 
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshTokenStore.set(tokens.refresh_token);
 
         // Salva também em cookie para o middleware Next.js poder ler
-        document.cookie = `v360_access_token=${tokens.access_token}; path=/; max-age=900; SameSite=Strict`;
+        document.cookie = `v360_access_token=${tokens.access_token}; path=/; max-age=900; SameSite=Lax`;
         // max-age=900 = 15 minutos (igual ao TTL do access_token no backend)
         // NÃO coloca o refresh_token em cookie — mantê-lo só no localStorage é mais seguro
 
