@@ -63,12 +63,12 @@ class FactScoreDimensao(Base):
         nullable=False,
     )
     dimensao: Mapped[DimensaoHSE] = mapped_column(
-        sa.Enum(DimensaoHSE, name="dimensao_hse"),
+        sa.Enum(DimensaoHSE, name="dimensao_hse", create_type=False),
         nullable=False,
     )
     score_medio: Mapped[Decimal] = mapped_column(sa.Numeric(5, 2), nullable=False)
     nivel_risco: Mapped[NivelRisco] = mapped_column(
-        sa.Enum(NivelRisco, name="nivel_risco"),
+        sa.Enum(NivelRisco, name="nivel_risco", create_type=False),
         nullable=False,
     )
     total_respostas: Mapped[int] = mapped_column(sa.Integer, nullable=False)

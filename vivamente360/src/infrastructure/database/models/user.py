@@ -36,7 +36,7 @@ class User(Base, TimestampMixin):
     email_criptografado: Mapped[bytes] = mapped_column(sa.LargeBinary, nullable=False)
     hashed_password: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        sa.Enum(UserRole, name="user_role"),
+        sa.Enum(UserRole, name="user_role", create_type=False),
         nullable=False,
         default=UserRole.RESPONDENT,
     )
