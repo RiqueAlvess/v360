@@ -11,8 +11,8 @@ Adiciona melhorias de performance e consistência para o Email Service:
    PostgreSQL nativo — necessário para o endpoint de limpeza de tokens
    (auth_router.schedule_token_cleanup) funcionar corretamente.
 
-Revision ID: c3d4e5f6a7b8
-Revises: b2c3d4e5f6a7
+Revision ID: c3d4e5f6a7b9
+Revises: c3d4e5f6a7b8
 Create Date: 2024-01-05 00:00:00.000000
 """
 from typing import Sequence, Union
@@ -21,8 +21,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "c3d4e5f6a7b8"
-down_revision: Union[str, None] = "b2c3d4e5f6a7"
+revision: str = "c3d4e5f6a7b9"
+down_revision: Union[str, None] = "c3d4e5f6a7b8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

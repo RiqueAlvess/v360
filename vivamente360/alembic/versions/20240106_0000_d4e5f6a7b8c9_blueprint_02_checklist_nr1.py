@@ -14,7 +14,7 @@ Regra R5: RLS ativa em checklist_items — o banco é a última linha de defesa.
 Regra R2: Tabela file_assets é compartilhada entre módulos (evidências, relatórios).
 
 Revision ID: d4e5f6a7b8c9
-Revises: c3d4e5f6a7b8
+Revises: c3d4e5f6a7b9
 Create Date: 2024-01-06 00:00:00.000000
 
 """
@@ -26,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "d4e5f6a7b8c9"
-down_revision: Union[str, None] = "c3d4e5f6a7b8"
+down_revision: Union[str, None] = "c3d4e5f6a7b9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
