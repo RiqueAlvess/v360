@@ -8,9 +8,10 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { tokenStore, refreshTokenStore } from "@/lib/api";
-import { V360_ACCESS_TOKEN_KEY, V360_REFRESH_TOKEN_KEY } from "@/lib/constants";
+import { V360_ACCESS_TOKEN_KEY, V360_REFRESH_TOKEN_KEY, ROUTES } from "@/lib/constants";
 import type { UserProfile } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ export interface AuthContextValue {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<LoginOutcome>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<LoginOutcome>;
   logout: () => Promise<void>;
 }
 
@@ -41,6 +42,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── login ──────────────────────────────────────────────────────────────────
   const login = useCallback(
-    async (email: string, password: string): Promise<LoginOutcome> => {
+    async (email: string, password: string, redirectTo?: string): Promise<LoginOutcome> => {
       try {
         const { data: tokens } = await api.post<{
           access_token: string;
@@ -141,9 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokenStore.set(tokens.access_token);
         refreshTokenStore.set(tokens.refresh_token);
 
+        // /me confirma que a sessão está válida antes de redirecionar
         const { data: profile } = await api.get<UserProfile>("/auth/me");
         setUser(profile);
         setIsAuthenticated(true);
+
+        // Redirect happens here, after /me returns 200
+        router.push(redirectTo ?? ROUTES.DASHBOARD);
 
         return { success: true };
       } catch (err: unknown) {
@@ -156,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message };
       }
     },
-    []
+    [router]
   );
 
   // ── logout ─────────────────────────────────────────────────────────────────
