@@ -32,7 +32,7 @@ class Company(Base, TimestampMixin):
     # Exemplo: "acme-corp" → /denuncia/acme-corp/submit
     slug: Mapped[Optional[str]] = mapped_column(sa.String(100), nullable=True, unique=True)
     plano: Mapped[CompanyPlan] = mapped_column(
-        sa.Enum(CompanyPlan, name="company_plan"),
+        sa.Enum(CompanyPlan, name="company_plan", create_type=False),
         nullable=False,
         default=CompanyPlan.FREE,
     )

@@ -22,12 +22,12 @@ class TaskQueue(Base, TimestampMixin):
         default=uuid.uuid4,
     )
     tipo: Mapped[TaskQueueType] = mapped_column(
-        sa.Enum(TaskQueueType, name="task_queue_type"),
+        sa.Enum(TaskQueueType, name="task_queue_type", create_type=False),
         nullable=False,
     )
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     status: Mapped[TaskQueueStatus] = mapped_column(
-        sa.Enum(TaskQueueStatus, name="task_queue_status"),
+        sa.Enum(TaskQueueStatus, name="task_queue_status", create_type=False),
         nullable=False,
         default=TaskQueueStatus.PENDING,
     )
