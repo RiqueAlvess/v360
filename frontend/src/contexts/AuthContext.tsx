@@ -148,8 +148,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile);
         setIsAuthenticated(true);
 
-        // Redirect happens here, after /me returns 200
+        // Redirect happens here, after /me returns 200.
+        // router.refresh() forces the middleware to re-evaluate the session;
+        // without it the server still sees the unauthenticated state and
+        // redirects back to /login in a loop.
         router.push(redirectTo ?? ROUTES.DASHBOARD);
+        router.refresh();
 
         return { success: true };
       } catch (err: unknown) {
