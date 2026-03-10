@@ -6,11 +6,18 @@ import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { useAuthStore } from "@/features/auth/hooks/useAuth";
 import { authService } from "@/features/auth/services/authService";
+import { refreshTokenStore } from "@/lib/api";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setAuth, clearAuth, setLoading } = useAuthStore();
 
   useEffect(() => {
+    // If no refresh token exists, user is definitely not logged in — skip API call
+    if (!refreshTokenStore.get()) {
+      clearAuth();
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     authService
