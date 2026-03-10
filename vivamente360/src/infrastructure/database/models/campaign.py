@@ -33,7 +33,7 @@ class Campaign(Base, TimestampMixin):
     )
     nome: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     status: Mapped[CampaignStatus] = mapped_column(
-        sa.Enum(CampaignStatus, name="campaign_status"),
+        sa.Enum(CampaignStatus, name="campaign_status", create_type=False),
         nullable=False,
         default=CampaignStatus.DRAFT,
     )

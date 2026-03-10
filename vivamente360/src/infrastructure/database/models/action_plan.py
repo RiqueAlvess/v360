@@ -73,11 +73,11 @@ class ActionPlan(Base, TimestampMixin):
         sa.String(200), nullable=True
     )
     nivel_risco: Mapped[NivelRisco] = mapped_column(
-        sa.Enum(NivelRisco, name="nivel_risco"),
+        sa.Enum(NivelRisco, name="nivel_risco", create_type=False),
         nullable=False,
     )
     status: Mapped[ActionPlanStatus] = mapped_column(
-        sa.Enum(ActionPlanStatus, name="action_plan_status"),
+        sa.Enum(ActionPlanStatus, name="action_plan_status", create_type=False),
         nullable=False,
         default=ActionPlanStatus.PENDENTE,
     )
