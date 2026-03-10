@@ -9,7 +9,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { useAuth } from "../hooks/useAuth";
-import { extractApiError } from "@/lib/api";
 import { ROUTES } from "@/lib/constants";
 
 export function LoginForm() {
@@ -32,19 +31,20 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    try {
-      await login(data.email, data.password, data.rememberMe);
-      const callbackUrl = searchParams.get("callbackUrl") || ROUTES.DASHBOARD;
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (error) {
-      const apiError = extractApiError(error);
+    const result = await login(data.email, data.password);
+    if (!result.success) {
       const message =
-        apiError.status === 401
+        result.message === "Incorrect email or password" ||
+        result.message?.toLowerCase().includes("senha") ||
+        result.message?.toLowerCase().includes("password")
           ? "E-mail ou senha incorretos"
-          : apiError.message || "Erro ao fazer login";
+          : result.message || "Erro ao fazer login";
       toast.error(message);
+      return;
     }
+    const callbackUrl = searchParams.get("callbackUrl") || ROUTES.DASHBOARD;
+    router.push(callbackUrl);
+    router.refresh();
   };
 
   const isProcessing = isSubmitting;
