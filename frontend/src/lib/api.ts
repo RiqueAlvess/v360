@@ -10,6 +10,7 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 let inMemoryAccessToken: string | null = null;
 
 const SESSION_COOKIE = "session";
+const REFRESH_TOKEN_KEY = "rf";
 
 function syncSessionCookie(token: string | null): void {
   if (typeof document === "undefined") return;
@@ -29,6 +30,26 @@ export const tokenStore = {
   clear: () => {
     inMemoryAccessToken = null;
     syncSessionCookie(null);
+  },
+};
+
+// Refresh token stored in sessionStorage (cleared on tab/browser close)
+export const refreshTokenStore = {
+  get: (): string | null => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  },
+  set: (token: string | null): void => {
+    if (typeof window === "undefined") return;
+    if (token) {
+      sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+    } else {
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
+  },
+  clear: (): void => {
+    if (typeof window === "undefined") return;
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   },
 };
 
@@ -100,14 +121,21 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await api.post<{ access_token: string }>("/auth/refresh");
+        const rt = refreshTokenStore.get();
+        if (!rt) throw new Error("No refresh token");
+        const response = await api.post<{ access_token: string; refresh_token: string }>(
+          "/auth/refresh",
+          { refresh_token: rt }
+        );
         const newToken = response.data.access_token;
         tokenStore.set(newToken);
+        refreshTokenStore.set(response.data.refresh_token);
         onTokenRefreshed(newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         tokenStore.clear();
+        refreshTokenStore.clear();
         onRefreshFailed();
         // Redirect to login
         if (typeof window !== "undefined") {
