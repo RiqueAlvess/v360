@@ -39,7 +39,7 @@ class SurveyResponse(Base):
     texto_livre: Mapped[Optional[str]] = mapped_column(sa.Text, nullable=True)
     # Classificação qualitativa de sentimento — populada pelo AnalyzeSentimentHandler
     sentimento: Mapped[Optional[SentimentoType]] = mapped_column(
-        sa.Enum(SentimentoType, name="sentimento_type", create_type=False),
+        sa.Enum(SentimentoType, name="sentimento_type", create_type=False, values_callable=lambda obj: [e.value for e in obj]),
         nullable=True,
     )
     # Score numérico de sentimento: -1.0 (crítico) a +1.0 (positivo)

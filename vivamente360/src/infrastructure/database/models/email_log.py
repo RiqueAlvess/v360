@@ -24,7 +24,7 @@ class EmailLog(Base):
     # SHA-256 hex do email destinatário — nunca o email em plaintext
     destinatario_hash: Mapped[str] = mapped_column(sa.String(64), nullable=False)
     status: Mapped[EmailLogStatus] = mapped_column(
-        sa.Enum(EmailLogStatus, name="email_log_status", create_type=False),
+        sa.Enum(EmailLogStatus, name="email_log_status", create_type=False, values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
     )
     # ID retornado pelo provedor (Resend) — pode ser nulo em caso de falha pré-envio
