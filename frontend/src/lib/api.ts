@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { API_URL } from "./constants";
+import { API_URL, V360_ACCESS_TOKEN_KEY, V360_REFRESH_TOKEN_KEY } from "./constants";
 
 // Extend request config to support retry flag
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
@@ -90,6 +90,20 @@ function onRefreshFailed(): void {
   refreshSubscribers = [];
 }
 
+function lsSetTokens(access: string, refresh: string): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(V360_ACCESS_TOKEN_KEY, access);
+    localStorage.setItem(V360_REFRESH_TOKEN_KEY, refresh);
+  }
+}
+
+function lsClearTokens(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(V360_ACCESS_TOKEN_KEY);
+    localStorage.removeItem(V360_REFRESH_TOKEN_KEY);
+  }
+}
+
 // Response interceptor — handle 401 and refresh token
 api.interceptors.response.use(
   (response) => response,
@@ -130,12 +144,14 @@ api.interceptors.response.use(
         const newToken = response.data.access_token;
         tokenStore.set(newToken);
         refreshTokenStore.set(response.data.refresh_token);
+        lsSetTokens(newToken, response.data.refresh_token);
         onTokenRefreshed(newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         tokenStore.clear();
         refreshTokenStore.clear();
+        lsClearTokens();
         onRefreshFailed();
         return Promise.reject(refreshError);
       } finally {

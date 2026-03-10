@@ -2,51 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Toaster } from "sonner";
-import { useAuthStore } from "@/features/auth/hooks/useAuth";
-import { authService } from "@/features/auth/services/authService";
-import { refreshTokenStore } from "@/lib/api";
-
-function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { setAuth, clearAuth, setLoading } = useAuthStore();
-
-  useEffect(() => {
-    // If no refresh token exists, user is definitely not logged in — skip API call
-    if (!refreshTokenStore.get()) {
-      clearAuth();
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    authService
-      .getProfile()
-      .then((profile) => {
-        if (!cancelled) {
-          const currentToken = useAuthStore.getState().accessToken ?? "";
-          setAuth(profile, currentToken);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const status = (error as { response?: { status?: number } })?.response?.status;
-          if (!status || status === 401 || status === 403) {
-            clearAuth();
-          } else {
-            // Network error or unexpected failure — don't force logout
-            setLoading(false);
-          }
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <>{children}</>;
-}
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(

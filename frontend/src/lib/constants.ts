@@ -166,6 +166,8 @@ export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 // Auth
 export const ACCESS_TOKEN_KEY = "access_token";
 export const SESSION_COOKIE_NAME = "session";
+export const V360_ACCESS_TOKEN_KEY = "v360_access_token";
+export const V360_REFRESH_TOKEN_KEY = "v360_refresh_token";
 
 // Risk Levels (NR-1)
 export const RISK_LEVELS = {
