@@ -33,6 +33,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "f7a8b9c0d1e2"
@@ -41,20 +42,29 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 # Enum de classificação de sentimento (novo tipo nativo PostgreSQL)
-SENTIMENTO_TYPE_ENUM = sa.Enum(
+# Usa postgresql.ENUM para evitar _on_table_create do sa.Enum (DuplicateObjectError)
+SENTIMENTO_TYPE_ENUM = postgresql.ENUM(
     "positivo",
     "neutro",
     "negativo",
     "critico",
     name="sentimento_type",
+    create_type=False,
 )
 
 
 def upgrade() -> None:
     # -----------------------------------------------------------------------
-    # 1. Criar tipo ENUM nativo para sentimento_type
+    # 1. Criar tipo ENUM nativo para sentimento_type (idempotente via DO $$)
     # -----------------------------------------------------------------------
-    SENTIMENTO_TYPE_ENUM.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sentimento_type') THEN
+                CREATE TYPE sentimento_type AS ENUM ('positivo', 'neutro', 'negativo', 'critico');
+            END IF;
+        END$$;
+    """)
 
     # -----------------------------------------------------------------------
     # 2. Adicionar colunas à tabela survey_responses
@@ -67,7 +77,7 @@ def upgrade() -> None:
         "survey_responses",
         sa.Column(
             "sentimento",
-            sa.Enum(
+            postgresql.ENUM(
                 "positivo",
                 "neutro",
                 "negativo",

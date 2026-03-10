@@ -39,7 +39,8 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 # ENUM para as 7 dimensões HSE-IT adaptado para o contexto brasileiro
-DIMENSAO_HSE_ENUM = sa.Enum(
+# Usa postgresql.ENUM para evitar _on_table_create do sa.Enum (DuplicateObjectError)
+DIMENSAO_HSE_ENUM = postgresql.ENUM(
     "demandas",
     "controle",
     "suporte_gestao",
@@ -48,24 +49,40 @@ DIMENSAO_HSE_ENUM = sa.Enum(
     "mudancas",
     "suporte_colegas",
     name="dimensao_hse",
+    create_type=False,
 )
 
 # ENUM para níveis de risco — ordem crescente de severidade
-NIVEL_RISCO_ENUM = sa.Enum(
+NIVEL_RISCO_ENUM = postgresql.ENUM(
     "aceitavel",
     "moderado",
     "importante",
     "critico",
     name="nivel_risco",
+    create_type=False,
 )
 
 
 def upgrade() -> None:
     # -----------------------------------------------------------------------
-    # 1. Criar tipos ENUM nativos do PostgreSQL
+    # 1. Criar tipos ENUM nativos do PostgreSQL (idempotente via DO $$)
     # -----------------------------------------------------------------------
-    DIMENSAO_HSE_ENUM.create(op.get_bind(), checkfirst=True)
-    NIVEL_RISCO_ENUM.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dimensao_hse') THEN
+                CREATE TYPE dimensao_hse AS ENUM ('demandas', 'controle', 'suporte_gestao', 'relacionamentos', 'papel_funcao', 'mudancas', 'suporte_colegas');
+            END IF;
+        END$$;
+    """)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'nivel_risco') THEN
+                CREATE TYPE nivel_risco AS ENUM ('aceitavel', 'moderado', 'importante', 'critico');
+            END IF;
+        END$$;
+    """)
 
     # -----------------------------------------------------------------------
     # 2. organizational_units — unidades organizacionais (ex: Filial SP, HQ)
@@ -279,7 +296,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "dimensao",
-            sa.Enum(
+            postgresql.ENUM(
                 "demandas",
                 "controle",
                 "suporte_gestao",
@@ -295,7 +312,7 @@ def upgrade() -> None:
         sa.Column("score_medio", sa.Numeric(5, 2), nullable=False),
         sa.Column(
             "nivel_risco",
-            sa.Enum(
+            postgresql.ENUM(
                 "aceitavel",
                 "moderado",
                 "importante",

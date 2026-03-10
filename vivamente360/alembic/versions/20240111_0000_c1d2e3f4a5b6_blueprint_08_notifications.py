@@ -39,6 +39,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 # revision identifiers, used by Alembic.
@@ -57,19 +58,16 @@ def upgrade() -> None:
     )
 
     # -----------------------------------------------------------------------
-    # 2. Cria o ENUM notification_tipo
+    # 2. Cria o ENUM notification_tipo (idempotente via DO $$)
     # -----------------------------------------------------------------------
-    notification_tipo_enum = sa.Enum(
-        "campanha_encerrada",
-        "relatorio_pronto",
-        "nova_denuncia",
-        "plano_vencendo",
-        "analise_ia_concluida",
-        "checklist_concluido",
-        "taxa_resposta_baixa",
-        name="notification_tipo",
-    )
-    notification_tipo_enum.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_tipo') THEN
+                CREATE TYPE notification_tipo AS ENUM ('campanha_encerrada', 'relatorio_pronto', 'nova_denuncia', 'plano_vencendo', 'analise_ia_concluida', 'checklist_concluido', 'taxa_resposta_baixa');
+            END IF;
+        END$$;
+    """)
 
     # -----------------------------------------------------------------------
     # 3. Cria tabela notifications
@@ -96,7 +94,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tipo",
-            sa.Enum(
+            postgresql.ENUM(
                 "campanha_encerrada",
                 "relatorio_pronto",
                 "nova_denuncia",
@@ -209,7 +207,7 @@ def downgrade() -> None:
     op.drop_table("notifications")
 
     # Remove ENUM
-    sa.Enum(name="notification_tipo").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="notification_tipo").drop(op.get_bind(), checkfirst=True)
 
     # Nota: valores de ENUM não podem ser removidos no PostgreSQL sem recriar o tipo.
     # 'check_campaign_alerts' permanece no ENUM task_queue_type após downgrade.

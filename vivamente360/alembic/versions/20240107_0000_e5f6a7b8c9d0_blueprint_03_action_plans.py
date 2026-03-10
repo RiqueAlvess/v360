@@ -97,7 +97,7 @@ def upgrade() -> None:
         sa.Column("responsavel_externo", sa.String(200), nullable=True),
         sa.Column(
             "nivel_risco",
-            sa.Enum(
+            postgresql.ENUM(
                 "aceitavel",
                 "moderado",
                 "importante",
@@ -109,7 +109,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "status",
-            sa.Enum(
+            postgresql.ENUM(
                 "pendente",
                 "em_andamento",
                 "concluido",
