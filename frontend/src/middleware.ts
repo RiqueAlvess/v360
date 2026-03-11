@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   '/reset-password',
   '/survey',
   '/denuncia',
-  '/whistleblower',
 ];
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
