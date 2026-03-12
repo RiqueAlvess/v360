@@ -52,21 +52,21 @@ class UserAdmin(ModelView, model=User):
 
     column_list = [
         User.id,
-        User.full_name,
+        User.nome,
         User.role,
         User.company_id,
-        User.is_active,
+        User.ativo,
         User.created_at,
     ]
-    column_searchable_list = [User.full_name]
-    column_sortable_list = [User.full_name, User.role, User.is_active]
-    column_filters = [User.role, User.is_active]
-    # NUNCA exibir email_encrypted, email_hash ou password_hash
-    column_exclude_list = [User.email_encrypted, User.email_hash, User.password_hash]
+    column_searchable_list = [User.nome]
+    column_sortable_list = [User.nome, User.role, User.ativo]
+    column_filters = [User.role, User.ativo]
+    # NUNCA exibir email_criptografado, email_hash ou hashed_password
+    column_exclude_list = [User.email_criptografado, User.email_hash, User.hashed_password]
     form_excluded_columns = [
-        User.email_encrypted,
+        User.email_criptografado,
         User.email_hash,
-        User.password_hash,
+        User.hashed_password,
         User.created_at,
         User.updated_at,
     ]
