@@ -61,8 +61,6 @@ class UserAdmin(ModelView, model=User):
     column_searchable_list = [User.nome]
     column_sortable_list = [User.nome, User.role, User.ativo]
     column_filters = [User.role, User.ativo]
-    # NUNCA exibir email_criptografado, email_hash ou hashed_password
-    column_exclude_list = [User.email_criptografado, User.email_hash, User.hashed_password]
     form_excluded_columns = [
         User.email_criptografado,
         User.email_hash,
