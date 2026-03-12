@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     # Rate limit de análises IA por empresa por hora (Módulo 06)
     OPENROUTER_RATE_LIMIT_PER_HOUR: int = 10
 
+    # SQLAdmin — painel global separado do JWT da aplicação
+    SQLADMIN_SECRET_KEY: str = "change-this-sqladmin-secret"
+    SQLADMIN_USERNAME: str = "superadmin"
+    SQLADMIN_PASSWORD: str = "changeme"
+
     # Storage — Cloudflare R2 / S3-compatible
     STORAGE_BUCKET_NAME: str = Field(default="vivamente-files")
     STORAGE_ENDPOINT_URL: str = Field(default="https://placeholder.r2.cloudflarestorage.com")

@@ -77,6 +77,61 @@ def create_app() -> FastAPI:
     # Register routers
     _register_routers(app)
 
+    # ── SQLAdmin ─────────────────────────────────────────────────────────────
+    # Painel global de administração em /sqladmin
+    # Autenticação própria — completamente separada do JWT da aplicação
+    from sqladmin import Admin
+    from sqladmin.authentication import AuthenticationBackend
+    from starlette.requests import Request as StarletteRequest
+
+    from src.infrastructure.admin.views import (
+        CampaignAdmin,
+        CompanyAdmin,
+        UserAdmin,
+    )
+
+    class _SuperAdminAuth(AuthenticationBackend):
+        """Backend de autenticação para o painel SQLAdmin.
+
+        Valida credenciais via SQLADMIN_USERNAME e SQLADMIN_PASSWORD do .env.
+        Mantém sessão via cookie assinado com SQLADMIN_SECRET_KEY.
+        """
+
+        async def login(self, request: StarletteRequest) -> bool:
+            form = await request.form()
+            username: str = str(form.get("username", ""))
+            password: str = str(form.get("password", ""))
+            if (
+                username == settings.SQLADMIN_USERNAME
+                and password == settings.SQLADMIN_PASSWORD
+            ):
+                request.session.update({"sqladmin_auth": True})
+                return True
+            return False
+
+        async def logout(self, request: StarletteRequest) -> bool:
+            request.session.clear()
+            return True
+
+        async def authenticate(self, request: StarletteRequest) -> bool:
+            return bool(request.session.get("sqladmin_auth", False))
+
+    # engine é o AsyncEngine já criado no app — reutilizar, não criar novo
+    from src.infrastructure.database.session import engine as _db_engine
+
+    _admin = Admin(
+        app,
+        engine=_db_engine,
+        authentication_backend=_SuperAdminAuth(
+            secret_key=settings.SQLADMIN_SECRET_KEY
+        ),
+        title="VIVAMENTE 360° — Admin",
+        base_url="/sqladmin",
+    )
+    _admin.add_view(CompanyAdmin)
+    _admin.add_view(UserAdmin)
+    _admin.add_view(CampaignAdmin)
+
     return app
 
 

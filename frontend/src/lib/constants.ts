@@ -236,7 +236,6 @@ export const ROUTES = {
   DENUNCIA: "/denuncia",
   STORAGE: "/storage",
   SETTINGS: "/settings",
-  SUPER_ADMIN: "/super-admin",
 } as const;
 
 // Date formats
