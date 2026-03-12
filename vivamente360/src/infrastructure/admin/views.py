@@ -30,7 +30,7 @@ class CompanyAdmin(ModelView, model=Company):
     ]
     column_searchable_list = [Company.nome, Company.cnpj]
     column_sortable_list = [Company.nome, Company.ativo, Company.created_at]
-    column_filters = [Company.ativo, Company.plano]
+    column_filters = ["ativo", "plano"]
     form_excluded_columns = [
         Company.created_at,
         Company.updated_at,
@@ -60,7 +60,7 @@ class UserAdmin(ModelView, model=User):
     ]
     column_searchable_list = [User.nome]
     column_sortable_list = [User.nome, User.role, User.ativo]
-    column_filters = [User.role, User.ativo]
+    column_filters = ["role", "ativo"]
     form_excluded_columns = [
         User.email_criptografado,
         User.email_hash,
@@ -87,7 +87,7 @@ class CampaignAdmin(ModelView, model=Campaign):
     ]
     column_searchable_list = [Campaign.nome]
     column_sortable_list = [Campaign.nome, Campaign.status, Campaign.created_at]
-    column_filters = [Campaign.status]
+    column_filters = ["status"]
 
     can_create = False
     can_edit = False
