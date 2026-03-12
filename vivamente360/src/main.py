@@ -126,7 +126,7 @@ def create_app() -> FastAPI:
             secret_key=settings.SQLADMIN_SECRET_KEY
         ),
         title="VIVAMENTE 360° — Admin",
-        base_url="/sqladmin",
+        base_url="/admin",
     )
     _admin.add_view(CompanyAdmin)
     _admin.add_view(UserAdmin)
