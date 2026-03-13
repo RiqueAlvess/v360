@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Edit, Play, Square, Copy } from "lucide-react";
+import { Edit, Play, Square, Copy } from "lucide-react";
 import { useCampaign, useActivateCampaign, useCloseCampaign } from "../hooks/useCampaigns";
 import { PageHeader } from "@/components/common/PageHeader";
 import { CampaignStatusBadge } from "@/components/common/StatusBadge";
@@ -59,13 +59,6 @@ export function CampaignDetailView({ id }: CampaignDetailViewProps) {
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Voltar
-            </button>
             {campaign.status === "DRAFT" && (
               <button
                 onClick={() => router.push(`${ROUTES.CAMPAIGNS}/${id}/edit`)}
@@ -120,7 +113,7 @@ export function CampaignDetailView({ id }: CampaignDetailViewProps) {
       {/* Survey Link */}
       {campaign.status === "ACTIVE" && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Link da Pesquisa (Blind Drop)</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">Link da Pesquisa</h3>
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
             <p className="flex-1 text-sm font-mono text-gray-600 truncate">{surveyUrl}</p>
             <button
@@ -135,7 +128,7 @@ export function CampaignDetailView({ id }: CampaignDetailViewProps) {
             </button>
           </div>
           <p className="text-xs text-gray-400 mt-2">
-            Este link pode ser compartilhado com colaboradores. As respostas são completamente anônimas.
+            Compartilhe este link com os colaboradores. As respostas são completamente anônimas.
           </p>
         </div>
       )}

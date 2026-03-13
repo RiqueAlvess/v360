@@ -25,17 +25,18 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  comingSoon?: boolean;
 }
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: "Campanhas", href: ROUTES.CAMPAIGNS, icon: Megaphone },
-  { label: "Relatórios", href: ROUTES.REPORTS, icon: FileBarChart },
-  { label: "Canal de Denúncias", href: ROUTES.WHISTLEBLOWER, icon: MessageSquareWarning },
-  { label: "Análise IA", href: ROUTES.AI_ANALYSIS, icon: Brain },
-  { label: "Planos de Ação", href: ROUTES.ACTION_PLANS, icon: ClipboardList },
-  { label: "Armazenamento", href: ROUTES.STORAGE, icon: HardDrive },
-  { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings },
+  { label: "Relatórios", href: ROUTES.REPORTS, icon: FileBarChart, comingSoon: true },
+  { label: "Canal de Denúncias", href: ROUTES.WHISTLEBLOWER, icon: MessageSquareWarning, comingSoon: true },
+  { label: "Análise IA", href: ROUTES.AI_ANALYSIS, icon: Brain, comingSoon: true },
+  { label: "Planos de Ação", href: ROUTES.ACTION_PLANS, icon: ClipboardList, comingSoon: true },
+  { label: "Armazenamento", href: ROUTES.STORAGE, icon: HardDrive, comingSoon: true },
+  { label: "Configurações", href: ROUTES.SETTINGS, icon: Settings, comingSoon: true },
 ];
 
 interface SidebarProps {
@@ -45,7 +46,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -103,14 +104,27 @@ export function Sidebar({ className }: SidebarProps) {
                     "text-sm font-medium sidebar-text",
                     isActive
                       ? "bg-[var(--color-sidebar-active)] text-white"
-                      : "hover:bg-blue-800 hover:text-white",
+                      : item.comingSoon
+                        ? "opacity-50 cursor-not-allowed pointer-events-none"
+                        : "hover:bg-blue-800 hover:text-white",
                     collapsed && "justify-center px-2"
                   )}
                   aria-current={isActive ? "page" : undefined}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? item.label : item.comingSoon ? `${item.label} — em breve` : undefined}
+                  tabIndex={item.comingSoon ? -1 : undefined}
+                  aria-disabled={item.comingSoon}
                 >
                   <item.icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && (
+                    <span className="flex-1 flex items-center justify-between">
+                      {item.label}
+                      {item.comingSoon && (
+                        <span className="text-[10px] font-medium bg-blue-800/60 text-blue-200 px-1.5 py-0.5 rounded">
+                          Em breve
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
@@ -118,14 +132,8 @@ export function Sidebar({ className }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* User section */}
+      {/* Logout */}
       <div className="border-t border-blue-900 p-3">
-        {!collapsed && user && (
-          <div className="px-2 py-1 mb-2">
-            <p className="text-xs text-blue-300 truncate">{user.full_name}</p>
-            <p className="text-xs text-blue-400 truncate">{user.email}</p>
-          </div>
-        )}
         <button
           onClick={handleLogout}
           className={cn(

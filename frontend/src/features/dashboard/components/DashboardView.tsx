@@ -8,7 +8,7 @@ import { RiskBarChart } from "@/components/charts/RiskBarChart";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { PageLoader } from "@/components/common/LoadingSpinner";
 import { formatNumber, formatPercent } from "@/lib/utils";
-import { Users, Megaphone, TrendingUp, AlertTriangle } from "lucide-react";
+import { Users, Megaphone, TrendingUp, ShieldAlert } from "lucide-react";
 
 export function DashboardView() {
   const { data, isLoading, error } = useDashboard();
@@ -53,16 +53,13 @@ export function DashboardView() {
           icon={TrendingUp}
           color="purple"
         />
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-amber-50">
-              <AlertTriangle className="w-5 h-5 text-amber-600" aria-hidden="true" />
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mb-1">Risco Geral (NR-1)</p>
-          <RiskBadge level={kpis.overall_risk_level} />
-          <p className="text-xs text-gray-400 mt-1">Score: {Math.round(kpis.risk_score)}/100</p>
-        </div>
+        <KpiCard
+          title="Risco Geral (NR-1)"
+          value={<RiskBadge level={kpis.overall_risk_level} />}
+          subValue={`Score: ${Math.round(kpis.risk_score)}/100`}
+          icon={ShieldAlert}
+          color="amber"
+        />
       </div>
 
       {/* Charts Row */}
@@ -115,7 +112,8 @@ export function DashboardView() {
 
 interface KpiCardProps {
   title: string;
-  value: string;
+  value: React.ReactNode;
+  subValue?: string;
   icon: React.ElementType;
   color: "blue" | "green" | "purple" | "amber";
 }
@@ -127,7 +125,7 @@ const COLOR_CLASSES: Record<KpiCardProps["color"], string> = {
   amber: "bg-amber-50 text-amber-600",
 };
 
-function KpiCard({ title, value, icon: Icon, color }: KpiCardProps) {
+function KpiCard({ title, value, subValue, icon: Icon, color }: KpiCardProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
@@ -136,7 +134,12 @@ function KpiCard({ title, value, icon: Icon, color }: KpiCardProps) {
         </div>
       </div>
       <p className="text-xs text-gray-500 mb-1">{title}</p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      {typeof value === "string" ? (
+        <p className="text-2xl font-bold text-gray-900">{value}</p>
+      ) : (
+        <div className="mt-1">{value}</div>
+      )}
+      {subValue && <p className="text-xs text-gray-400 mt-1">{subValue}</p>}
     </div>
   );
 }

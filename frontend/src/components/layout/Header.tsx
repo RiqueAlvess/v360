@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getInitials } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -36,21 +36,8 @@ export function Header({ onMenuClick, className }: HeaderProps) {
         <span className="font-bold text-primary lg:hidden">VIVAMENTE 360°</span>
       </div>
 
-      {/* Right side: notifications + user */}
+      {/* Right side: user */}
       <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <button
-          className="relative p-2 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
-          aria-label="Notificações"
-        >
-          <Bell className="w-5 h-5" />
-          {/* Notification badge - shown when there are unread notifications */}
-          <span
-            className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"
-            aria-hidden="true"
-          />
-        </button>
-
         {/* User avatar */}
         {user && (
           <div className="flex items-center gap-2">

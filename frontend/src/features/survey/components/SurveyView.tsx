@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { useSurvey, useSubmitSurvey } from "../hooks/useSurvey";
 import { PageLoader } from "@/components/common/LoadingSpinner";
+import { cn } from "@/lib/utils";
 import type { SurveyResponse } from "@/types";
 import { extractApiError } from "@/lib/api";
 
@@ -98,11 +99,19 @@ interface SurveyFormProps {
   isSubmitting: boolean;
 }
 
+const LIKERT_5_OPTIONS = [
+  { value: "1", label: "Nunca" },
+  { value: "2", label: "Raramente" },
+  { value: "3", label: "Às vezes" },
+  { value: "4", label: "Frequentemente" },
+  { value: "5", label: "Sempre" },
+];
+
 function SurveyForm({ survey, onSubmit, isSubmitting }: SurveyFormProps) {
   const schema = buildSurveySchema(survey.questions);
   type FormData = z.infer<typeof schema>;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { control, register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -115,14 +124,6 @@ function SurveyForm({ survey, onSubmit, isSubmitting }: SurveyFormProps) {
       }));
     await onSubmit(responses);
   };
-
-  const LIKERT_5_OPTIONS = [
-    { value: "1", label: "Nunca" },
-    { value: "2", label: "Raramente" },
-    { value: "3", label: "Às vezes" },
-    { value: "4", label: "Frequentemente" },
-    { value: "5", label: "Sempre" },
-  ];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -156,29 +157,37 @@ function SurveyForm({ survey, onSubmit, isSubmitting }: SurveyFormProps) {
                 </div>
               </div>
 
-              {/* Likert 5 */}
+              {/* Likert 5 — uses Controller so selection state is always visible */}
               {question.type === "LIKERT_5" && (
-                <div className="grid grid-cols-5 gap-2">
-                  {LIKERT_5_OPTIONS.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex flex-col items-center gap-1 cursor-pointer group"
-                    >
-                      <input
-                        type="radio"
-                        value={option.value}
-                        {...register(question.id)}
-                        className="sr-only"
-                      />
-                      <div className="w-full py-2 rounded-lg border-2 border-gray-200 text-center text-xs font-medium text-gray-500 group-hover:border-primary group-hover:text-primary transition-colors peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white cursor-pointer">
-                        {option.value}
-                      </div>
-                      <span className="text-xs text-gray-400 text-center leading-tight">
-                        {option.label}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <Controller
+                  name={question.id}
+                  control={control}
+                  render={({ field }) => (
+                    <div className="grid grid-cols-5 gap-2" role="radiogroup">
+                      {LIKERT_5_OPTIONS.map((option) => {
+                        const selected = field.value === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => field.onChange(option.value)}
+                            className={cn(
+                              "flex flex-col items-center gap-1.5 py-2 px-1 rounded-lg border-2 transition-all cursor-pointer",
+                              selected
+                                ? "border-primary bg-primary text-white"
+                                : "border-gray-200 text-gray-500 hover:border-primary/50 hover:text-primary"
+                            )}
+                          >
+                            <span className="text-sm font-semibold">{option.value}</span>
+                            <span className="text-xs leading-tight text-center">{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                />
               )}
 
               {/* Text */}
@@ -210,19 +219,34 @@ function SurveyForm({ survey, onSubmit, isSubmitting }: SurveyFormProps) {
 
               {/* Yes/No */}
               {question.type === "YES_NO" && (
-                <div className="flex gap-3">
-                  {["Sim", "Não"].map((option) => (
-                    <label key={option} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        value={option}
-                        {...register(question.id)}
-                        className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-                      />
-                      <span className="text-sm text-gray-700">{option}</span>
-                    </label>
-                  ))}
-                </div>
+                <Controller
+                  name={question.id}
+                  control={control}
+                  render={({ field }) => (
+                    <div className="flex gap-3">
+                      {["Sim", "Não"].map((option) => {
+                        const selected = field.value === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            onClick={() => field.onChange(option)}
+                            className={cn(
+                              "px-5 py-2 rounded-lg border-2 text-sm font-medium transition-all",
+                              selected
+                                ? "border-primary bg-primary text-white"
+                                : "border-gray-200 text-gray-600 hover:border-primary/50 hover:text-primary"
+                            )}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                />
               )}
 
               {errors[question.id] && (

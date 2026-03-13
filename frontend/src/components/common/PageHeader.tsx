@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface Breadcrumb {
@@ -29,9 +30,9 @@ export function PageHeader({
               <li key={index} className="flex items-center gap-1.5">
                 {index > 0 && <span aria-hidden="true">/</span>}
                 {crumb.href ? (
-                  <a href={crumb.href} className="hover:text-primary transition-colors">
+                  <Link href={crumb.href} className="hover:text-primary transition-colors">
                     {crumb.label}
-                  </a>
+                  </Link>
                 ) : (
                   <span className="text-gray-800 font-medium">{crumb.label}</span>
                 )}
